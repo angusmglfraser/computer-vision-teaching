@@ -5,13 +5,42 @@
 	<title>Sobel Edge Detection</title>
 </head>
 <body>
-	<video id="webcam" autoplay style="display: none"></video>
+	<h1>Sobel Edge Detection</h1>
+	<table>
+		<tr>
+			<td>1</td>
+			<td>2</td>
+			<td>1</td>
+		</tr>
+		<tr>
+			<td>0</td>
+			<td>0</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td>-1</td>
+			<td>-2</td>
+			<td>-1</td>
+		</tr>
+	</table>
+	<p>
+		The Sobel operator is a kernel used for edge detection. The kernel can, however, only detect a gradient in intensity along one direction,
+		so with this kernel, a perfectly vertical edge would not register, and as an edge moves from being horizontal to vertical, it becomes
+		less intense in the output of the convolution. Below you can see the result of convolving an image with this matrix, then with the same
+		matrix rotated 90 degrees, and then with a combined value for the two. Try taking an object with a straight edge and rotate it. See how the 
+		edge changes in intensity in the first two images as it is being rotated, but changes little in the image that combines the two. 
+	</p>
+		<video id="webcam" autoplay style="display: none"></video>
+	
 	<canvas id="camfeed"></canvas>
-	<canvas id="sobel"></canvas>
+	<canvas id="sobelx"></canvas>
+	<canvas id="sobely"></canvas>
+	<canvas id="sobelboth"></canvas>
+
 	<canvas id="zoomwindow"></canvas>
 
 	<br />
-	<button id="startBtn" onClick="computeFrame();">Start Edge Detection</button>
+	<button id="startBtn" onClick="animating = true;computeFrame();">Start Edge Detection</button>
 	<button id="stopBtn">Stop Edge Detection</button>
 
 
@@ -19,25 +48,82 @@
 
 	var animating = false;
 
-
-	var sobelKernelX = [
-		[1,2,1],
-		[0,0,0],
-		[-1,-2,-1]
-	];
-	var sobelKernelY = [
-		[1,0,-1],
-		[2,0,-2],
-		[1,0,-1]
-	];
+	var sobelKernel = [[1,0,-1],[2,0,-2],[1,0,-1]];
+	var sobelRotated = [[1,2,1],[0,0,0],[-1,-2,-1]];
 
 
 	/*
 	 * This function is necessary since javascript stores 2-dimensional image data
 	 * in 1-dimensional arrays
 	 */
-	function getIndex(x, y, width) {
+	function getIndex(x, y, width, height) {
+	 	
+		// The following 4 if statements are used to "extend" the image beyond it's boundaries so that edge and corner
+		// pixels can be calculated as well.
+	 	if (x < 0) {
+	 		x++;
+	 	}
+	 	if (y < 0) {
+	 		y++;
+	 	}
+	 	if (x >= width) {
+	 		x = width - 1;
+	 	}
+	 	if (y >= height) {
+	 		y = height - 1;
+	 	}
 	 	return (width * y) + x;
+	}
+
+	/*
+	 * Returns the result of performing a gaussian blur on an image
+	 */
+	function gaussianBlur(image) {
+		var kernel = [1/256,4/256,6/256,4/256,1/256];
+		var offset = 2;
+		var data = new Uint8ClampedArray(image.width * image.height * 4);
+
+		for (var x = 0; x < image.width; x++) {
+			for (var y = 0; y < image.width; y++) {
+				var r = 0;
+				var g = 0;
+				var b = 0;
+
+				for (var i = 0; i < 5; i ++) {
+					r += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+					g += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 1];
+					b += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 2];
+				}
+				
+				var index = getIndex(x,y,image.width, image.height) * 4;
+				data[index] = r;
+				data[index + 1] = g;
+				data[index + 2] = b;
+				data[index + 3] = 255;
+			}
+		}
+
+		var output = new ImageData(image.width, image.height);
+		for (var x = 0; x < image.width; x++) {
+			for (var y = 0; y < image.width; y++) {
+				var r = 0;
+				var g = 0;
+				var b = 0;
+
+				for (var i = 0; i < 5; i ++) {
+					r += kernel[i] * data[getIndex(x, y + offset - i, image.width, image.height) * 4];
+					g += kernel[i] * data[(getIndex(x, y + offset - i, image.width, image.height) * 4) + 1];
+					b += kernel[i] * data[(getIndex(x, y + offset - i, image.width, image.height) * 4) + 2];
+				}
+				
+				var index = getIndex(x,y,image.width, image.height) * 4;
+				output.data[index] = r;
+				output.data[index + 1] = g;
+				output.data[index + 2] = b;
+				output.data[index + 3] = 255;
+			}
+		}
+		return output;
 	}
 
 	/*
@@ -57,38 +143,43 @@
 		return new ImageData(data, image.width, image.height);
 	}
 
-	/*
-	 * Convolves image with 2 kernels to get edge gradients in the x and y direction
-	 * and combines those values to get a general "edge" intensity
-	 */
-	function dualConvolve(image, kernelx, kernely, kernelHeight, kernelWidth) {
-	 	var output = new ImageData(image.width, image.height);
 
-	 	// The offsets are used in calculating the similar pixel in the kernel and the image portion
-	 	// currently being convolved
-	 	var offsetX = Math.floor(kernelWidth / 2);
-	 	var offsetY = Math.floor(kernelHeight / 2);
+	function singleConvolve(image, kernel, kernelWidth, kernelHeight) {
+		var output = new ImageData(image.width, image.height);
 
-		// Inner region 1 pixel in from boundaries because edge cases are tricky
-		for (var x = 1; x < image.width - 1; x++) {
-			for (var y = 1; y < image.height - 1; y++) {
-				var xAccumulator = 0;
-				var yAccumulator = 0;
+		var offsetX = Math.floor(kernelWidth / 2);
+		var offsetY = Math.floor(kernelHeight / 2);
+
+		for (var x = 0; x < image.width; x++) {
+			for (var y = 0; y < image.height; y ++) {
+				var accumulator = 0;
 
 				for (var kx = 0; kx < kernelWidth; kx++) {
 					for (var ky = 0; ky < kernelHeight; ky++) {
-						xAccumulator += kernelx[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width) * 4];
-						yAccumulator += kernely[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width) * 4];
+						accumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
 					}
 				}
 
-				var finalEdgeValue = Math.sqrt((xAccumulator * xAccumulator) + (yAccumulator * yAccumulator));
-
-				var index = getIndex(x,y,image.width) * 4;
-				output.data[index] = output.data[index + 1] = output.data[index + 2] = finalEdgeValue;
+				var index = getIndex(x,y,image.width,image.height) * 4;
+				output.data[index] = output.data[index + 1] = output.data[index + 2] = Math.abs(accumulator);
 				output.data[index + 3] = 255;
 			}
 		}
+
+		return output;
+	}
+
+	function combineConvolutions(image1, image2) {
+		var output = new ImageData(image1.width, image1.height);
+
+		for (var i = 0; i < image1.data.length; i+=4) {
+			var val1 = image1.data[i];
+			var val2 = image2.data[i];
+
+			output.data[i] = output.data[i + 1] = output.data[i + 2] = Math.sqrt((val1 * val1) + (val2 * val2));
+			output.data[i + 3] = 255;
+		}
+
 		return output;
 	}
 
@@ -106,11 +197,15 @@
 		var inputImage = camfeedctx.getImageData(0,0,videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
 
 		inputImage = greyScale(inputImage);
-		outputImage = dualConvolve(inputImage, sobelKernelX, sobelKernelY, 3, 3);
+		var x = singleConvolve(inputImage, sobelKernel, 3, 3);
+		var y = singleConvolve(inputImage, sobelRotated, 3, 3);
+		var both = combineConvolutions(x,y);
 
-		document.getElementById('sobel').getContext('2d').putImageData(outputImage, 0, 0);
+		document.getElementById('sobelx').getContext('2d').putImageData(x, 0, 0);
+		document.getElementById('sobely').getContext('2d').putImageData(y, 0, 0);
+		document.getElementById('sobelboth').getContext('2d').putImageData(both, 0, 0);
 
-		if (!document.getElementById('stopBtn').clicked) {
+		if (animating) {
 			requestAnimationFrame(computeFrame);
 		}
 	}
@@ -121,11 +216,17 @@
 			function(stream) {
 				document.getElementById('webcam').srcObject = stream;
 				document.getElementById('webcam').addEventListener('playing', function(event) {
-					document.getElementById('camfeed').width = document.getElementById('webcam').videoWidth;
-					document.getElementById('camfeed').height = document.getElementById('webcam').videoHeight;
+					document.getElementById('camfeed').width = document.getElementById('webcam').videoWidth * 0.75;
+					document.getElementById('camfeed').height = document.getElementById('webcam').videoHeight * 0.75;
 
-					document.getElementById('sobel').width = document.getElementById('webcam').videoWidth;
-					document.getElementById('sobel').height = document.getElementById('webcam').videoHeight;
+					document.getElementById('sobelx').width = document.getElementById('webcam').videoWidth * 0.75;
+					document.getElementById('sobelx').height = document.getElementById('webcam').videoHeight * 0.75;
+
+					document.getElementById('sobely').width = document.getElementById('webcam').videoWidth * 0.75;
+					document.getElementById('sobely').height = document.getElementById('webcam').videoHeight * 0.75;
+
+					document.getElementById('sobelboth').width = document.getElementById('webcam').videoWidth * 0.75;
+					document.getElementById('sobelboth').height = document.getElementById('webcam').videoHeight * 0.75;
 				})
 			}
 		).catch(
@@ -135,6 +236,9 @@
 		);
 	}
 
+	document.getElementById('stopBtn').addEventListener('click', function (event) {
+		animating = false;
+	})
 	initCamera();
 	</script>
-	</html>
+</html>
