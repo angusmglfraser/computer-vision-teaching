@@ -1,4 +1,4 @@
-var gaussKernel = [
+const gaussKernel = [
 	[1/273,4/273,7/273,4/273,1/273],
 	[4/273,16/273,26/273,16/273,4/273],
 	[7/273,26/273,41/273,26/273,7/273],
@@ -9,6 +9,8 @@ var gaussKernel = [
 /*
  * This function is necessary since javascript stores 2-dimensional image data
  * in 1-dimensional arrays
+ * 
+ * Since this function can't return invalid indexes, it isn't very safe. Use wisely
  */
 function getIndex(x, y, width, height) {
 	// The following 4 if statements are used to "extend" the image beyond it's boundaries so that edge and corner
@@ -91,17 +93,12 @@ function initCamera() {
 			function(stream) {
 				document.getElementById('webcam').srcObject = stream;
 				document.getElementById('webcam').addEventListener('playing', function(event) {
-					document.getElementById('camfeed').width = document.getElementById('webcam').videoWidth * 0.75;
-					document.getElementById('camfeed').height = document.getElementById('webcam').videoHeight * 0.75;
+					var canvases = document.getElementsByTagName('canvas');
 
-					document.getElementById('sobelx').width = document.getElementById('webcam').videoWidth * 0.75;
-					document.getElementById('sobelx').height = document.getElementById('webcam').videoHeight * 0.75;
-
-					document.getElementById('sobely').width = document.getElementById('webcam').videoWidth * 0.75;
-					document.getElementById('sobely').height = document.getElementById('webcam').videoHeight * 0.75;
-
-					document.getElementById('sobelboth').width = document.getElementById('webcam').videoWidth * 0.75;
-					document.getElementById('sobelboth').height = document.getElementById('webcam').videoHeight * 0.75;
+					for (var i = 0; i < canvases.length; i++) {
+						canvases[i].width = document.getElementById('webcam').videoWidth * 0.75;
+						canvases[i].height = document.getElementById('webcam').videoHeight * 0.75;
+					}
 				})
 			}
 		).catch(

@@ -52,12 +52,12 @@
 	var blur = false;
 	var animating = false;
 
-	var sobelKernel = [
+	const sobelKernel = [
 		[1,0,-1],
 		[2,0,-2],
 		[1,0,-1]
 	];
-	var sobelRotated = [
+	const sobelRotated = [
 		[1,2,1],
 		[0,0,0],
 		[-1,-2,-1]
@@ -75,7 +75,7 @@
 			videoElement.videoWidth * 0.75,
 			videoElement.videoHeight * 0.75
 		);
-		
+
 		var inputImage = camfeedctx.getImageData(0,0,videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
 
 		if (blur) {
