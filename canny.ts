@@ -8,8 +8,6 @@ enum EdgeStrength {
 
 let animating = false;
 
-
-
 function computeEdgeAngles(image1: ImageData, image2: ImageData): Uint8ClampedArray {
     let output = new Uint8ClampedArray(image1.width * image1.height);
     for (let i = 0; i < image1.data.length; i += 4) {

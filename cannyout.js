@@ -1,7 +1,14 @@
 (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
 "use strict";
-exports.__esModule = true;
-var Vision = require("./vision");
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+var Vision = __importStar(require("./vision"));
 var EdgeStrength;
 (function (EdgeStrength) {
     EdgeStrength[EdgeStrength["NO_EDGE"] = 0] = "NO_EDGE";
@@ -140,7 +147,7 @@ Vision.initCamera();
 
 },{"./vision":2}],2:[function(require,module,exports){
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
@@ -243,7 +250,7 @@ function initCamera() {
                 canvases[i].height = webcamElement.videoHeight * 0.75;
             }
         });
-    })["catch"](function (err) {
+    }).catch(function (err) {
         alert(err);
     });
 }

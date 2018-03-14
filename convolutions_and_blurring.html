@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Convolutions and Blurring</title>
+</head>
+
+<body>
+	<h1>Convolutions and Blurring</h1>
+	<p>
+		Image convolution is found at the lowe level in many computer vision algorithms, and in image processing. There are many
+		different kernels used for different applications such as blurring an image, finding edges, sharpening edge, and so on.
+		This page will mostly be focussing on blurring, specifically, Gaussian blurring.
+	</p>
+
+	<input id="kernelSize" type="number"></input>
+	<input id="stdDev" type="number"></input>
+	<button id="startBtn" onClick="animating = true;computeFrame();">Start Convolving</button>
+	<button id="stopBtn">Stop Convolving</button>
+
+	<br />
+	<canvas id="camfeed"></canvas>
+	<canvas id="convolutionout"></canvas>
+	<canvas id="zoomwindow"></canvas>
+
+	<table id="matrix"></table>
+
+	<video id="webcam" autoplay style="display: none"></video>
+
+	<script src="gaussout.js"></script>
+</body>
+
+</html>
