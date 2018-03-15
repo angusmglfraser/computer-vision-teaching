@@ -54,6 +54,8 @@ function computeFrame() {
     var camfeedctx = document.getElementById('camfeed').getContext('2d');
     camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight);
     var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    var outputImage = Vision.convolve1d(inputImage, convolutionKernel);
+    document.getElementById('convolutionout').getContext('2d').putImageData(outputImage, 0, 0);
     if (animating) {
         requestAnimationFrame(computeFrame);
     }

@@ -92,7 +92,7 @@ function getIndex(x, y, width, height) {
 }
 exports.getIndex = getIndex;
 /*
- * Convolves image with kernel
+ * Convolves a greyscale image with kernel
  */
 function convolve(image, kernel, kernelWidth, kernelHeight, preserveSign) {
     if (preserveSign === void 0) { preserveSign = false; }
@@ -101,20 +101,61 @@ function convolve(image, kernel, kernelWidth, kernelHeight, preserveSign) {
     var offsetY = Math.floor(kernelHeight / 2);
     for (var x = 0; x < image.width; x++) {
         for (var y = 0; y < image.height; y++) {
-            var accumulator = 0;
+            var raccumulator = 0;
+            var gaccumulator = 0;
+            var baccumulator = 0;
             for (var kx = 0; kx < kernelWidth; kx++) {
                 for (var ky = 0; ky < kernelHeight; ky++) {
-                    accumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
+                    raccumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
+                    gaccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 1];
+                    baccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 2];
                 }
             }
             var index = getIndex(x, y, image.width, image.height) * 4;
-            output.data[index] = output.data[index + 1] = output.data[index + 2] = preserveSign ? accumulator : Math.abs(accumulator);
+            output.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
+            output.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
+            output.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
             output.data[index + 3] = 255;
         }
     }
     return output;
 }
 exports.convolve = convolve;
+/*
+ * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
+ */
+function convolve1d(image, kernel, preserveSign) {
+    if (preserveSign === void 0) { preserveSign = false; }
+    var output = new ImageData(image.width, image.height);
+    var intermediate = new ImageData(image.width, image.height);
+    var offset = Math.floor(kernel.length / 2);
+    //first convolution
+    for (var x = 0; x < image.width; x++) {
+        for (var y = 0; y < image.height; y++) {
+            var index = getIndex(x, y, image.width, image.height) * 4;
+            var accumulator = 0;
+            for (var i = 0; i < kernel.length; i++) {
+                accumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+            }
+            intermediate.data[index] = intermediate.data[index + 1] = intermediate.data[index + 2] = accumulator;
+            intermediate.data[index + 3] = 255;
+        }
+    }
+    //second convolution
+    for (var x = 0; x < image.width; x++) {
+        for (var y = 0; y < image.height; y++) {
+            var index = getIndex(x, y, image.width, image.height) * 4;
+            var accumulator = 0;
+            for (var i = 0; i < kernel.length; i++) {
+                accumulator += kernel[i] * intermediate.data[getIndex(x, y + offset - i, image.width, image.height) * 4];
+            }
+            output.data[index] = output.data[index + 1] = output.data[index + 2] = accumulator;
+            output.data[index + 3] = 255;
+        }
+    }
+    return output;
+}
+exports.convolve1d = convolve1d;
 /*
  * Returns a greyscaled version of an image
  */

@@ -42,7 +42,7 @@ export function getIndex(x: number, y: number, width: number, height: number): n
 }
 
 /*
- * Convolves image with kernel
+ * Convolves a greyscale image with kernel
  */
 export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelWidth: number, kernelHeight: number, preserveSign = false): ImageData {
 	let output: ImageData = new ImageData(image.width, image.height);
@@ -51,16 +51,22 @@ export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelW
 	let offsetY = Math.floor(kernelHeight / 2);
 	for (let x = 0; x < image.width; x++) {
 		for (let y = 0; y < image.height; y++) {
-			let accumulator = 0;
+			let raccumulator = 0;
+			let gaccumulator = 0;
+			let baccumulator = 0;
 
 			for (let kx = 0; kx < kernelWidth; kx++) {
 				for (let ky = 0; ky < kernelHeight; ky++) {
-					accumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
+					raccumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
+					gaccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 1];
+					baccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 2];
 				}
 			}
 
 			let index = getIndex(x, y, image.width, image.height) * 4;
-			output.data[index] = output.data[index + 1] = output.data[index + 2] = preserveSign ? accumulator : Math.abs(accumulator);
+			output.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
+			output.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
+			output.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
 			output.data[index + 3] = 255;
 		}
 	}
@@ -71,20 +77,26 @@ export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelW
 /*
  * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
  */
-export function convolve1d(image: ImageData, kernel: Array<number>, kernelLength, preserveSign = false): ImageData {
+export function convolve1d(image: ImageData, kernel: Array<number>, preserveSign = false): ImageData {
 	let output: ImageData = new ImageData(image.width, image.height);
 	let intermediate: ImageData = new ImageData(image.width, image.height);
-	let offset = Math.floor(kernelLength / 2);
+	let offset = Math.floor(kernel.length / 2);
 
 	//first convolution
 	for (let x = 0; x < image.width; x++) {
 		for (let y = 0; y < image.height; y++) {
 			let index = getIndex(x,y,image.width,image.height) * 4;
-			let accumulator = 0;
-			for (let i = 0; i < kernelLength; i++) {
-				accumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+			let raccumulator = 0;
+			let gaccumulator = 0;
+			let baccumulator = 0;
+			for (let i = 0; i < kernel.length; i++) {
+				raccumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+				gaccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 1];
+				baccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 2];
 			}
-			intermediate.data[index] = intermediate.data[index + 1] = intermediate.data[index + 2] = accumulator;
+			intermediate.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
+			intermediate.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
+			intermediate.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
 			intermediate.data[index + 3] = 255;
 		}
 	}
@@ -92,12 +104,18 @@ export function convolve1d(image: ImageData, kernel: Array<number>, kernelLength
 	//second convolution
 	for (let x = 0; x < image.width; x++) {
 		for (let y = 0; y < image.height; y++) {
-			let index = getIndex(x,y,image.width, image.height);
-			let accumulator = 0;
-			for (let i = 0; i < kernelLength; i++) {
-				accumulator += kernel[i] * intermediate.data[getIndex(x, y + offset - i, image.width, image.height) * 4];
+			let index = getIndex(x,y,image.width, image.height) * 4;
+			let raccumulator = 0;
+			let gaccumulator = 0;
+			let baccumulator = 0;
+			for (let i = 0; i < kernel.length; i++) {
+				raccumulator += kernel[i] * intermediate.data[getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4];
+				gaccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 1];
+				baccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 2];
 			}
-			output.data[index] = output.data[index + 1] = output.data[index + 2] = accumulator;
+			output.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
+			output.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
+			output.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
 			output.data[index + 3] = 255;
 		}
 	}
