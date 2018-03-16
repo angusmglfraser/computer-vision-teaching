@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
 	<title>Sobel Edge Detection</title>
 </head>
+
 <body>
-		
+
 	<h1>Sobel Edge Detection</h1>
 	<table>
 		<tr>
@@ -25,14 +27,15 @@
 		</tr>
 	</table>
 	<p>
-		The Sobel operator is a kernel used for edge detection. The kernel can, however, only detect a gradient in intensity along one direction,
-		so with this kernel, a perfectly vertical edge would not register, and as an edge moves from being horizontal to vertical, it becomes
-		less intense in the output of the convolution. Below you can see the result of convolving an image with this matrix, then with the same
-		matrix rotated 90 degrees, and then with a combined value for the two. Try taking an object with a straight edge and rotate it. See how the 
-		edge changes in intensity in the first two images as it is being rotated, but changes little in the image that combines the two. 
+		The Sobel operator is a kernel used for edge detection. The kernel can, however, only detect a gradient in intensity along
+		one direction, so with this kernel, a perfectly vertical edge would not register, and as an edge moves from being horizontal
+		to vertical, it becomes less intense in the output of the convolution. Below you can see the result of convolving an image
+		with this matrix, then with the same matrix rotated 90 degrees, and then with a combined value for the two. Try taking
+		an object with a straight edge and rotate it. See how the edge changes in intensity in the first two images as it is being
+		rotated, but changes little in the image that combines the two.
 	</p>
-	
-	
+
+
 	<button id="startBtn">Start Edge Detection</button>
 	<button id="stopBtn">Stop Edge Detection</button>
 	<input type="checkbox" id="gaussianToggle" />Gaussian Blur
@@ -44,9 +47,9 @@
 	<canvas id="sobelboth"></canvas>
 
 	<canvas id="zoomwindow"></canvas>
-	
+
 
 	<video id="webcam" autoplay style="display: none"></video>
 	<script src="js/bundles/sobel.js"></script>
-	
+
 </html>

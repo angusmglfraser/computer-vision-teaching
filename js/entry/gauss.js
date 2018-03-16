@@ -88,4 +88,3 @@ document.getElementById('stdDev').addEventListener('change', function (event) {
     writeMatrix(displayKernel);
 });
 Vision.initCamera();
-//# sourceMappingURL=gauss.js.map

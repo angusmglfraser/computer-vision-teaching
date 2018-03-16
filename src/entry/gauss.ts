@@ -1,20 +1,20 @@
 import * as Vision from '../vision';
 
 let animating = false;
-let stdDev:number = +(document.getElementById('stdDev') as HTMLInputElement).value;
+let stdDev: number = +(document.getElementById('stdDev') as HTMLInputElement).value;
 let kernelSize = +(document.getElementById('kernelSize') as HTMLInputElement).value;
 // This kernel will actually be used for the calculations
-let convolutionKernel:Array<number>;
+let convolutionKernel: Array<number>;
 // This kernel will just be displayed, and will not be used in calculations, for efficiency
-let displayKernel:Array<Array<number>>;
+let displayKernel: Array<Array<number>>;
 
 function computeKernel(size: number, weight: number): Array<number> {
     let result = new Array<number>(size);
     let sumTotal = 0;
-    
-    let offset = Math.floor(size/2);
+
+    let offset = Math.floor(size / 2);
     for (let i = 0 - offset; i <= offset; i++) {
-        sumTotal += result[i + offset] = (1/Math.sqrt(2 * Math.PI * weight * weight)) * Math.pow(Math.E, 0 - ((i * i) / (2 * weight * weight)));
+        sumTotal += result[i + offset] = (1 / Math.sqrt(2 * Math.PI * weight * weight)) * Math.pow(Math.E, 0 - ((i * i) / (2 * weight * weight)));
     }
 
     for (let i = 0; i < size; i++) {
@@ -49,7 +49,7 @@ function writeMatrix(matrix: Array<Array<number>>): void {
     matrixElement.innerHTML = resultString;
 }
 
-function computeFrame():void{
+function computeFrame(): void {
     let videoElement = document.getElementById('webcam') as HTMLVideoElement;
     let camfeedctx = (document.getElementById('camfeed') as HTMLCanvasElement).getContext('2d');
     camfeedctx.drawImage(
@@ -60,11 +60,11 @@ function computeFrame():void{
         videoElement.videoHeight * 0.75
     );
 
-    let inputImage = camfeedctx.getImageData(0,0,videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    let inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
 
-    let outputImage:ImageData = Vision.convolve1d(inputImage, convolutionKernel);
+    let outputImage: ImageData = Vision.convolve1d(inputImage, convolutionKernel);
 
-    (document.getElementById('convolutionout') as HTMLCanvasElement).getContext('2d').putImageData(outputImage,0,0);
+    (document.getElementById('convolutionout') as HTMLCanvasElement).getContext('2d').putImageData(outputImage, 0, 0);
 
     if (animating) {
         requestAnimationFrame(computeFrame);
@@ -80,7 +80,7 @@ document.getElementById('stopBtn').addEventListener('click', function (event) {
     animating = false;
 });
 
-document.getElementById('kernelSize').addEventListener('change', function(event) {
+document.getElementById('kernelSize').addEventListener('change', function (event) {
     let tmp = this as HTMLInputElement;
 
     let val = tmp.value;
@@ -93,7 +93,7 @@ document.getElementById('kernelSize').addEventListener('change', function(event)
     writeMatrix(displayKernel);
 });
 
-document.getElementById('stdDev').addEventListener('change', function(event) {
+document.getElementById('stdDev').addEventListener('change', function (event) {
     let tmp = this as HTMLInputElement;
 
     let val = tmp.value;

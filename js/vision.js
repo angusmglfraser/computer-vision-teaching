@@ -24,33 +24,19 @@ exports.sobelRotated = [
  * Since this function can't return invalid indexes, it isn't very safe. Use wisely
  */
 function getIndex(x, y, width, height) {
-    // The following 4 if statements are used to "extend" the image beyond it's boundaries so that edge and corner
-    // pixels can be calculated as well.
-    if (x < 0) {
-        x++;
-    }
-    if (y < 0) {
-        y++;
-    }
-    if (x >= width) {
-        x = width - 1;
-    }
-    if (y >= height) {
-        y = height - 1;
-    }
     return (width * y) + x;
 }
 exports.getIndex = getIndex;
 /*
  * Convolves a greyscale image with kernel
  */
-function convolve(image, kernel, kernelWidth, kernelHeight, preserveSign) {
-    if (preserveSign === void 0) { preserveSign = false; }
+function convolve(image, kernel, kernelWidth, kernelHeight) {
     var output = new ImageData(image.width, image.height);
     var offsetX = Math.floor(kernelWidth / 2);
     var offsetY = Math.floor(kernelHeight / 2);
-    for (var x = 0; x < image.width; x++) {
-        for (var y = 0; y < image.height; y++) {
+    // Done 1 pixel inwards from image boundary. Edges/corners will be handled separately
+    for (var x = 1; x < image.width - 1; x++) {
+        for (var y = 1; y < image.height - 1; y++) {
             var raccumulator = 0;
             var gaccumulator = 0;
             var baccumulator = 0;
@@ -62,15 +48,78 @@ function convolve(image, kernel, kernelWidth, kernelHeight, preserveSign) {
                 }
             }
             var index = getIndex(x, y, image.width, image.height) * 4;
-            output.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
-            output.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
-            output.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
+            output.data[index] = Math.abs(raccumulator);
+            output.data[index + 1] = Math.abs(gaccumulator);
+            output.data[index + 2] = Math.abs(baccumulator);
             output.data[index + 3] = 255;
         }
     }
     return output;
 }
 exports.convolve = convolve;
+/*
+ * I swear there is a more elegant way to do this, but I can't think of it. For now I'm stuck with this monstrosity
+ */
+function convolveCorners(image, kernel, kernelWidth, kernelHeight) {
+    var result = new Array(12);
+    // top left
+    for (var i = 0; i < 3; i++) {
+        var acc = 0;
+        acc += kernel[0][0] * image.data[0 + i];
+        acc += kernel[0][1] * image.data[0 + i];
+        acc += kernel[0][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][0] * image.data[0 + i];
+        acc += kernel[1][1] * image.data[0 + i];
+        acc += kernel[1][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][0] * image.data[4 + i];
+        acc += kernel[2][1] * image.data[4 + i];
+        acc += kernel[2][2] * image.data[(getIndex(1, 1, image.width, image.height) * 4) + i];
+        result[i] = acc;
+    }
+    // top right
+    for (var i = 0; i < 3; i++) {
+        var acc = 0;
+        acc += kernel[0][0] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
+        acc += kernel[0][1] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
+        acc += kernel[0][2] * image.data[(getIndex(image.width - 2, 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+        acc += kernel[1][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+        acc += kernel[1][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+        acc += kernel[2][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+        acc += kernel[2][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
+        result[3 + i] = acc;
+    }
+    // bottom left
+    for (var i = 0; i < 3; i++) {
+        var acc = 0;
+        acc += kernel[0][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[0][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[0][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[1][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][0] * image.data[(getIndex(1, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[2][1] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][2] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
+        result[6 + i] = acc;
+    }
+    // bottom right
+    for (var i = 0; i < 3; i++) {
+        var acc = 0;
+        acc += kernel[0][0] * image.data[(getIndex(image.width - 2, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[0][1] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[0][2] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[1][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[1][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
+        acc += kernel[2][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+        acc += kernel[2][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+        result[9 + i] = acc;
+    }
+    return result;
+}
 /*
  * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
  */
@@ -160,4 +209,3 @@ function initCamera() {
     });
 }
 exports.initCamera = initCamera;
-//# sourceMappingURL=vision.js.map

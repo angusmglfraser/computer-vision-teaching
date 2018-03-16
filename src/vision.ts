@@ -24,33 +24,21 @@ export const sobelRotated = [
  * Since this function can't return invalid indexes, it isn't very safe. Use wisely
  */
 export function getIndex(x: number, y: number, width: number, height: number): number {
-	// The following 4 if statements are used to "extend" the image beyond it's boundaries so that edge and corner
-	// pixels can be calculated as well.
-	if (x < 0) {
-		x++;
-	}
-	if (y < 0) {
-		y++;
-	}
-	if (x >= width) {
-		x = width - 1;
-	}
-	if (y >= height) {
-		y = height - 1;
-	}
 	return (width * y) + x;
 }
 
 /*
  * Convolves a greyscale image with kernel
  */
-export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelWidth: number, kernelHeight: number, preserveSign = false): ImageData {
+export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelWidth: number, kernelHeight: number): ImageData {
 	let output: ImageData = new ImageData(image.width, image.height);
 
 	let offsetX = Math.floor(kernelWidth / 2);
 	let offsetY = Math.floor(kernelHeight / 2);
-	for (let x = 0; x < image.width; x++) {
-		for (let y = 0; y < image.height; y++) {
+
+	// Done 1 pixel inwards from image boundary. Edges/corners will be handled separately
+	for (let x = 1; x < image.width - 1; x++) {
+		for (let y = 1; y < image.height - 1; y++) {
 			let raccumulator = 0;
 			let gaccumulator = 0;
 			let baccumulator = 0;
@@ -64,14 +52,83 @@ export function convolve(image: ImageData, kernel: Array<Array<number>>, kernelW
 			}
 
 			let index = getIndex(x, y, image.width, image.height) * 4;
-			output.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
-			output.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
-			output.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
+			output.data[index] = Math.abs(raccumulator);
+			output.data[index + 1] = Math.abs(gaccumulator);
+			output.data[index + 2] = Math.abs(baccumulator);
 			output.data[index + 3] = 255;
 		}
 	}
 
 	return output;
+}
+
+/*
+ * I swear there is a more elegant way to do this, but I can't think of it. For now I'm stuck with this monstrosity
+ */
+function convolveCorners(image: ImageData, kernel: Array<Array<number>>, kernelWidth: number, kernelHeight: number): Array<number> {
+	let result = new Array<number>(12);
+
+	// top left
+	for (let i = 0; i < 3; i++) {
+		let acc = 0;
+		acc += kernel[0][0] * image.data[0 + i];
+		acc += kernel[0][1] * image.data[0 + i];
+		acc += kernel[0][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][0] * image.data[0 + i];
+		acc += kernel[1][1] * image.data[0 + i];
+		acc += kernel[1][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][0] * image.data[4 + i];
+		acc += kernel[2][1] * image.data[4 + i];
+		acc += kernel[2][2] * image.data[(getIndex(1, 1, image.width, image.height) * 4) + i];
+		result[i] = acc;
+	}
+
+	// top right
+	for (let i = 0; i < 3; i++) {
+		let acc = 0;
+		acc += kernel[0][0] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
+		acc += kernel[0][1] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
+		acc += kernel[0][2] * image.data[(getIndex(image.width - 2, 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+		acc += kernel[1][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+		acc += kernel[1][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+		acc += kernel[2][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
+		acc += kernel[2][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
+		result[3 + i] = acc;
+	}
+
+	// bottom left
+	for (let i = 0; i < 3; i++) {
+		let acc = 0;
+		acc += kernel[0][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[0][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[0][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[1][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][0] * image.data[(getIndex(1, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[2][1] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][2] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
+		result[6 + i] = acc;
+	}
+
+	// bottom right
+	for (let i = 0; i < 3; i++) {
+		let acc = 0;
+		acc += kernel[0][0] * image.data[(getIndex(image.width - 2, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[0][1] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[0][2] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[1][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[1][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
+		acc += kernel[2][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+		acc += kernel[2][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
+		result[9 + i] = acc;
+	}
+
+	return result;
 }
 
 /*
@@ -85,7 +142,7 @@ export function convolve1d(image: ImageData, kernel: Array<number>, preserveSign
 	//first convolution
 	for (let x = 0; x < image.width; x++) {
 		for (let y = 0; y < image.height; y++) {
-			let index = getIndex(x,y,image.width,image.height) * 4;
+			let index = getIndex(x, y, image.width, image.height) * 4;
 			let raccumulator = 0;
 			let gaccumulator = 0;
 			let baccumulator = 0;
@@ -94,9 +151,9 @@ export function convolve1d(image: ImageData, kernel: Array<number>, preserveSign
 				gaccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 1];
 				baccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 2];
 			}
-			intermediate.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
-			intermediate.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
-			intermediate.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
+			intermediate.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
+			intermediate.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
+			intermediate.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
 			intermediate.data[index + 3] = 255;
 		}
 	}
@@ -104,7 +161,7 @@ export function convolve1d(image: ImageData, kernel: Array<number>, preserveSign
 	//second convolution
 	for (let x = 0; x < image.width; x++) {
 		for (let y = 0; y < image.height; y++) {
-			let index = getIndex(x,y,image.width, image.height) * 4;
+			let index = getIndex(x, y, image.width, image.height) * 4;
 			let raccumulator = 0;
 			let gaccumulator = 0;
 			let baccumulator = 0;
@@ -113,9 +170,9 @@ export function convolve1d(image: ImageData, kernel: Array<number>, preserveSign
 				gaccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 1];
 				baccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 2];
 			}
-			output.data[index] = preserveSign? raccumulator : Math.abs(raccumulator);
-			output.data[index + 1] = preserveSign? gaccumulator : Math.abs(gaccumulator);
-			output.data[index + 2] = preserveSign? baccumulator : Math.abs(baccumulator);
+			output.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
+			output.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
+			output.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
 			output.data[index + 3] = 255;
 		}
 	}
