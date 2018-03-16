@@ -1,4 +1,4 @@
-import * as Vision from './vision';
+import * as Vision from '../vision';
 
 
 let blurring = false;

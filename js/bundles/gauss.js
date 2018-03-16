@@ -1,4 +1,4 @@
-(function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -8,24 +8,55 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var Vision = __importStar(require("./vision"));
-var blurring = false;
+var Vision = __importStar(require("../vision"));
 var animating = false;
+var stdDev = +document.getElementById('stdDev').value;
+var kernelSize = +document.getElementById('kernelSize').value;
+// This kernel will actually be used for the calculations
+var convolutionKernel;
+// This kernel will just be displayed, and will not be used in calculations, for efficiency
+var displayKernel;
+function computeKernel(size, weight) {
+    var result = new Array(size);
+    var sumTotal = 0;
+    var offset = Math.floor(size / 2);
+    for (var i = 0 - offset; i <= offset; i++) {
+        sumTotal += result[i + offset] = (1 / Math.sqrt(2 * Math.PI * weight * weight)) * Math.pow(Math.E, 0 - ((i * i) / (2 * weight * weight)));
+    }
+    for (var i = 0; i < size; i++) {
+        result[i] = result[i] / sumTotal;
+    }
+    return result;
+}
+function expandKernel(kernel) {
+    var result = new Array(kernel.length);
+    for (var x = 0; x < kernel.length; x++) {
+        result[x] = new Array(kernel.length);
+        for (var y = 0; y < kernel.length; y++) {
+            result[x][y] = kernel[x] * kernel[y];
+        }
+    }
+    return result;
+}
+function writeMatrix(matrix) {
+    var matrixElement = document.getElementById('matrix');
+    var resultString = "";
+    for (var y = 0; y < matrix.length; y++) {
+        resultString += "<tr>";
+        for (var x = 0; x < matrix[y].length; x++) {
+            resultString += "<td>" + matrix[x][y] + "</td>";
+        }
+        resultString += "</tr>";
+    }
+    matrixElement.innerHTML = resultString;
+}
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var camfeedctx = document.getElementById('camfeed').getContext('2d');
     camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
     var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
-    if (blurring) {
-        inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
-    }
-    inputImage = Vision.greyScale(inputImage);
-    var x = Vision.convolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.convolve(inputImage, Vision.sobelRotated, 3, 3);
-    var both = Vision.combineConvolutions(x, y);
-    document.getElementById('sobelx').getContext('2d').putImageData(x, 0, 0);
-    document.getElementById('sobely').getContext('2d').putImageData(y, 0, 0);
-    document.getElementById('sobelboth').getContext('2d').putImageData(both, 0, 0);
+    var outputImage = Vision.convolve1d(inputImage, convolutionKernel);
+    document.getElementById('convolutionout').getContext('2d').putImageData(outputImage, 0, 0);
     if (animating) {
         requestAnimationFrame(computeFrame);
     }
@@ -37,17 +68,29 @@ document.getElementById('startBtn').addEventListener('click', function (event) {
 document.getElementById('stopBtn').addEventListener('click', function (event) {
     animating = false;
 });
-document.getElementById('gaussianToggle').addEventListener('change', function (event) {
-    if (this.checked) {
-        blurring = true;
+document.getElementById('kernelSize').addEventListener('change', function (event) {
+    var tmp = this;
+    var val = tmp.value;
+    if (+val != NaN) {
+        kernelSize = +val;
     }
-    else {
-        blurring = false;
+    convolutionKernel = computeKernel(kernelSize, stdDev);
+    displayKernel = expandKernel(convolutionKernel);
+    writeMatrix(displayKernel);
+});
+document.getElementById('stdDev').addEventListener('change', function (event) {
+    var tmp = this;
+    var val = tmp.value;
+    if (+val != NaN) {
+        stdDev = +val;
     }
+    convolutionKernel = computeKernel(kernelSize, stdDev);
+    displayKernel = expandKernel(convolutionKernel);
+    writeMatrix(displayKernel);
 });
 Vision.initCamera();
 
-},{"./vision":2}],2:[function(require,module,exports){
+},{"../vision":2}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gaussKernel = [
@@ -133,11 +176,17 @@ function convolve1d(image, kernel, preserveSign) {
     for (var x = 0; x < image.width; x++) {
         for (var y = 0; y < image.height; y++) {
             var index = getIndex(x, y, image.width, image.height) * 4;
-            var accumulator = 0;
+            var raccumulator = 0;
+            var gaccumulator = 0;
+            var baccumulator = 0;
             for (var i = 0; i < kernel.length; i++) {
-                accumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+                raccumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
+                gaccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 1];
+                baccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 2];
             }
-            intermediate.data[index] = intermediate.data[index + 1] = intermediate.data[index + 2] = accumulator;
+            intermediate.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
+            intermediate.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
+            intermediate.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
             intermediate.data[index + 3] = 255;
         }
     }
@@ -145,11 +194,17 @@ function convolve1d(image, kernel, preserveSign) {
     for (var x = 0; x < image.width; x++) {
         for (var y = 0; y < image.height; y++) {
             var index = getIndex(x, y, image.width, image.height) * 4;
-            var accumulator = 0;
+            var raccumulator = 0;
+            var gaccumulator = 0;
+            var baccumulator = 0;
             for (var i = 0; i < kernel.length; i++) {
-                accumulator += kernel[i] * intermediate.data[getIndex(x, y + offset - i, image.width, image.height) * 4];
+                raccumulator += kernel[i] * intermediate.data[getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4];
+                gaccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 1];
+                baccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 2];
             }
-            output.data[index] = output.data[index + 1] = output.data[index + 2] = accumulator;
+            output.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
+            output.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
+            output.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
             output.data[index + 3] = 255;
         }
     }

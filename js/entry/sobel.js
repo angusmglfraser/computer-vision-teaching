@@ -7,7 +7,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var Vision = __importStar(require("./vision"));
+var Vision = __importStar(require("../vision"));
 var blurring = false;
 var animating = false;
 function computeFrame() {

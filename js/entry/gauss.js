@@ -7,7 +7,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var Vision = __importStar(require("./vision"));
+var Vision = __importStar(require("../vision"));
 var animating = false;
 var stdDev = +document.getElementById('stdDev').value;
 var kernelSize = +document.getElementById('kernelSize').value;
@@ -52,7 +52,7 @@ function writeMatrix(matrix) {
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var camfeedctx = document.getElementById('camfeed').getContext('2d');
-    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight);
+    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
     var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
     var outputImage = Vision.convolve1d(inputImage, convolutionKernel);
     document.getElementById('convolutionout').getContext('2d').putImageData(outputImage, 0, 0);

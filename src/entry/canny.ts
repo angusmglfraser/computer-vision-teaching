@@ -1,4 +1,4 @@
-import * as Vision from './vision';
+import * as Vision from '../vision';
 
 enum EdgeStrength {
     NO_EDGE,

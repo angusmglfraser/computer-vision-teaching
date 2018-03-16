@@ -1,4 +1,4 @@
-(function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -8,89 +8,144 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var Vision = __importStar(require("./vision"));
+var Vision = __importStar(require("../vision"));
+var EdgeStrength;
+(function (EdgeStrength) {
+    EdgeStrength[EdgeStrength["NO_EDGE"] = 0] = "NO_EDGE";
+    EdgeStrength[EdgeStrength["WEAK_EDGE"] = 1] = "WEAK_EDGE";
+    EdgeStrength[EdgeStrength["STRONG_EDGE"] = 2] = "STRONG_EDGE";
+})(EdgeStrength || (EdgeStrength = {}));
 var animating = false;
-var stdDev = +document.getElementById('stdDev').value;
-var kernelSize = +document.getElementById('kernelSize').value;
-// This kernel will actually be used for the calculations
-var convolutionKernel;
-// This kernel will just be displayed, and will not be used in calculations, for efficiency
-var displayKernel;
-function computeKernel(size, weight) {
-    var result = new Array(size);
-    var sumTotal = 0;
-    var offset = Math.floor(size / 2);
-    for (var i = 0 - offset; i <= offset; i++) {
-        sumTotal += result[i + offset] = (1 / Math.sqrt(2 * Math.PI * weight * weight)) * Math.pow(Math.E, 0 - ((i * i) / (2 * weight * weight)));
+function computeEdgeAngles(image1, image2) {
+    var output = new Uint8ClampedArray(image1.width * image1.height);
+    for (var i = 0; i < image1.data.length; i += 4) {
+        var angle = Math.atan2(image1.data[i], image2.data[i]) * 180 / Math.PI;
+        output[i / 4] = angle;
     }
-    for (var i = 0; i < size; i++) {
-        result[i] = result[i] / sumTotal;
-    }
-    return result;
+    return output;
 }
-function expandKernel(kernel) {
-    var result = new Array(kernel.length);
-    for (var x = 0; x < kernel.length; x++) {
-        result[x] = new Array(kernel.length);
-        for (var y = 0; y < kernel.length; y++) {
-            result[x][y] = kernel[x] * kernel[y];
+function edgeThinning(image, gradients) {
+    var result = new ImageData(image.width, image.height);
+    for (var x = 0; x < image.width; x++) {
+        for (var y = 0; y < image.height; y++) {
+            var index = Vision.getIndex(x, y, image.width, image.height) * 4;
+            var angle = gradients[index / 4];
+            if (angle < 22.5) {
+                if (image.data[index] == Math.max(image.data[Vision.getIndex(x + 1, y, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y, image.width, image.height) * 4], image.data[index])) {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                }
+                else {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                }
+            }
+            else if (angle < 67.5) {
+                if (image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y + 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y - 1, image.width, image.height) * 4])
+                    || image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y - 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y + 1, image.width, image.height) * 4])) {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                }
+                else {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                }
+            }
+            else {
+                if (image.data[index] == Math.max(image.data[Vision.getIndex(x, y + 1, image.width, image.height) * 4], image.data[Vision.getIndex(x, y - 1, image.width, image.height) * 4], image.data[index])) {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                }
+                else {
+                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                }
+            }
+            result.data[index + 3] = 255;
         }
     }
     return result;
 }
-function writeMatrix(matrix) {
-    var matrixElement = document.getElementById('matrix');
-    var resultString = "";
-    for (var y = 0; y < matrix.length; y++) {
-        resultString += "<tr>";
-        for (var x = 0; x < matrix[y].length; x++) {
-            resultString += "<td>" + matrix[x][y] + "</td>";
+function thresholding(image, upperThreshold, lowerThreshold) {
+    var strengths = {
+        data: new Array(image.width, image.height),
+        width: image.width,
+        height: image.height
+    };
+    for (var x = 0; x < image.width; x++) {
+        for (var y = 0; y < image.height; y++) {
+            var index = Vision.getIndex(x, y, image.width, image.height) * 4;
+            if (image.data[index] > upperThreshold) {
+                strengths.data[index / 4] = EdgeStrength.STRONG_EDGE;
+            }
+            else if (image.data[index] > lowerThreshold) {
+                strengths.data[index / 4] = EdgeStrength.WEAK_EDGE;
+            }
+            else {
+                strengths[index / 4] = 0;
+            }
         }
-        resultString += "</tr>";
     }
-    matrixElement.innerHTML = resultString;
+    return strengths;
+}
+function edgeTracking(strengths) {
+    var output = new ImageData(strengths.width, strengths.height);
+    for (var x = 0; x < strengths.width; x++) {
+        for (var y = 0; y < strengths.height; y++) {
+            var index = Vision.getIndex(x, y, strengths.width, strengths.height);
+            var imageIndex = index * 4;
+            if (strengths.data[index] === EdgeStrength.STRONG_EDGE) {
+                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = 255;
+            }
+            else if (strengths.data[index] === EdgeStrength.WEAK_EDGE) {
+                // blob analysis
+                var isEdge = false;
+                for (var blobx = x - 1; blobx <= x + 1; blobx++) {
+                    for (var bloby = y - 1; bloby <= y + 1; bloby++) {
+                        if (strengths.data[Vision.getIndex(blobx, bloby, strengths.width, strengths.height)] === EdgeStrength.STRONG_EDGE) {
+                            isEdge = true;
+                            break;
+                        }
+                    }
+                    if (isEdge) {
+                        break;
+                    }
+                }
+                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = isEdge ? 255 : 0;
+            }
+            else {
+                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = 0;
+            }
+            output.data[imageIndex + 3] = 255;
+        }
+    }
+    return output;
 }
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var camfeedctx = document.getElementById('camfeed').getContext('2d');
-    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight);
+    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
     var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
-    var outputImage = Vision.convolve1d(inputImage, convolutionKernel);
-    document.getElementById('convolutionout').getContext('2d').putImageData(outputImage, 0, 0);
+    var greyScaled = Vision.greyScale(inputImage);
+    var blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
+    var gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);
+    var gy = Vision.convolve(blurred, Vision.sobelRotated, 3, 3);
+    var intensity = Vision.combineConvolutions(gx, gy);
+    var directions = computeEdgeAngles(gx, gy);
+    var thinnedEdges = edgeThinning(intensity, directions);
+    var lowerThreshold = +document.getElementById('lowerThreshold').value;
+    var upperThreshold = +document.getElementById('upperThreshold').value;
+    var thresholded = thresholding(thinnedEdges, upperThreshold, lowerThreshold);
+    var output = edgeTracking(thresholded);
+    document.getElementById('cannyoutput').getContext('2d').putImageData(output, 0, 0);
     if (animating) {
         requestAnimationFrame(computeFrame);
     }
 }
+document.getElementById('stopBtn').addEventListener('click', function (event) {
+    animating = false;
+});
 document.getElementById('startBtn').addEventListener('click', function (event) {
     animating = true;
     computeFrame();
 });
-document.getElementById('stopBtn').addEventListener('click', function (event) {
-    animating = false;
-});
-document.getElementById('kernelSize').addEventListener('change', function (event) {
-    var tmp = this;
-    var val = tmp.value;
-    if (+val != NaN) {
-        kernelSize = +val;
-    }
-    convolutionKernel = computeKernel(kernelSize, stdDev);
-    displayKernel = expandKernel(convolutionKernel);
-    writeMatrix(displayKernel);
-});
-document.getElementById('stdDev').addEventListener('change', function (event) {
-    var tmp = this;
-    var val = tmp.value;
-    if (+val != NaN) {
-        stdDev = +val;
-    }
-    convolutionKernel = computeKernel(kernelSize, stdDev);
-    displayKernel = expandKernel(convolutionKernel);
-    writeMatrix(displayKernel);
-});
 Vision.initCamera();
 
-},{"./vision":2}],2:[function(require,module,exports){
+},{"../vision":2}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gaussKernel = [

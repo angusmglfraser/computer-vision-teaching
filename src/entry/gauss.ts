@@ -1,4 +1,4 @@
-import * as Vision from './vision';
+import * as Vision from '../vision';
 
 let animating = false;
 let stdDev:number = +(document.getElementById('stdDev') as HTMLInputElement).value;
@@ -56,8 +56,8 @@ function computeFrame():void{
         videoElement,
         0,
         0,
-        videoElement.videoWidth,
-        videoElement.videoHeight
+        videoElement.videoWidth * 0.75,
+        videoElement.videoHeight * 0.75
     );
 
     let inputImage = camfeedctx.getImageData(0,0,videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);

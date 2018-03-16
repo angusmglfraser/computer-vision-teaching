@@ -3,18 +3,21 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Convolutions and Blurring</title>
+	<title>Gaussian Blurring</title>
 </head>
 
 <body>
-	<h1>Convolutions and Blurring</h1>
+	<h1>Image smoothing with Gaussian Blurring</h1>
 	<p>
-		Image convolution is found at the lowe level in many computer vision algorithms, and in image processing. There are many
-		different kernels used for different applications such as blurring an image, finding edges, sharpening edge, and so on.
-		This page will mostly be focussing on blurring, specifically, Gaussian blurring.
+		In anything that deals with sensor data, there will inevitably be some noise. 
+		One way to deal with noise in image data is to blur the image using a Gaussian
+		function. 
 	</p>
 
+	<label for="kernelSize">Kernel Width</label>
 	<input id="kernelSize" type="number"></input>
+	<br />
+	<label for="stdDev">Standard Deviation</label>
 	<input id="stdDev" type="number"></input>
 	<button id="startBtn">Start Convolving</button>
 	<button id="stopBtn">Stop Convolving</button>
@@ -28,7 +31,7 @@
 
 	<video id="webcam" autoplay style="display: none"></video>
 
-	<script src="gaussout.js"></script>
+	<script src="js/bundles/gauss.js"></script>
 </body>
 
 </html>
