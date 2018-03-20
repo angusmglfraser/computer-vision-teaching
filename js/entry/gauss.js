@@ -50,12 +50,9 @@ function writeMatrix(matrix) {
     matrixElement.innerHTML = resultString;
 }
 function computeFrame() {
-    var videoElement = document.getElementById('webcam');
-    var camfeedctx = document.getElementById('camfeed').getContext('2d');
-    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
-    var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
     var outputImage = Vision.convolve1d(inputImage, convolutionKernel);
-    document.getElementById('convolutionout').getContext('2d').putImageData(outputImage, 0, 0);
+    outputImage.draw(document.getElementById('convolutionout'));
     if (animating) {
         requestAnimationFrame(computeFrame);
     }

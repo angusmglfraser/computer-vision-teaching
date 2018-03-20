@@ -27,20 +27,20 @@ function edgeThinning(image: RGBImage, gradients: Array<Array<number>>): RGBImag
         for (let y = 0; y < image.getHeight(); y++) {
             let angle = gradients[x][y];
             if (angle < 22.5) {
-                if (image.r[x][y] == Math.max(image.r[x+1][y], image.r[x-1][y], image.r[x][y])) {
+                if (image.r[x][y] == Math.max(image.r[(x + 1) % image.getWidth()][y], image.r[Math.abs(x - 1)][y], image.r[x][y])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             } else if (angle < 67.5) {
-                if (image.r[x][y] == Math.max(image.r[x][y], image.r[x+1][y+1], image.r[x-1][y-1])
-                    || image.r[x][y] == Math.max(image.r[x][y], image.r[x+1][y-1], image.r[x-1][y+1])) {
+                if (image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][(y + 1) % image.getHeight()], image.r[Math.abs(x - 1)][Math.abs(y - 1)])
+                    || image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][Math.abs(y - 1)], image.r[Math.abs(x - 1)][(y + 1) % image.getHeight()])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             } else {
-                if (image.r[x][y] == Math.max(image.r[x][y+1], image.r[x][y-1], image.r[x][y])) {
+                if (image.r[x][y] == Math.max(image.r[x][(y + 1) % image.getHeight()], image.r[x][Math.abs(y - 1)], image.r[x][y])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
@@ -70,7 +70,7 @@ function thresholding(image: RGBImage, threshold1: number, threshold2: number): 
     return strengths;
 }
 
-function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage{
+function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage {
     let width = strengths.length;
     let height = strengths[0].length;
     let output = RGBImage.fromDimensions(width, height);
@@ -83,10 +83,12 @@ function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage{
             } else if (strengths[x][y] === EdgeStrength.WEAK_EDGE) {
                 // blob analysis
                 let isEdge = false;
+                let val = 0;
                 for (let blobx = x - 1; blobx <= x + 1; blobx++) {
                     for (let bloby = y - 1; bloby <= y + 1; bloby++) {
-                        if (strengths[blobx][bloby] === EdgeStrength.STRONG_EDGE) {
+                        if (strengths[Math.abs(blobx) % width][Math.abs(bloby) % height] === EdgeStrength.STRONG_EDGE) {
                             isEdge = true;
+                            val = 255;
                             break;
                         }
                     }
@@ -94,7 +96,7 @@ function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage{
                         break;
                     }
                 }
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = isEdge ? 255 : 0;
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = val;
             } else {
                 output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
             }
@@ -123,7 +125,7 @@ function computeFrame(): void {
     output.draw(document.getElementById('cannyoutput') as HTMLCanvasElement);
 
     if (animating) {
-        requestAnimationFrame(computeFrame);
+        console.log(requestAnimationFrame(computeFrame));
     }
 }
 

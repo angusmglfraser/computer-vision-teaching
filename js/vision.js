@@ -18,16 +18,6 @@ exports.sobelRotated = [
     [0, 0, 0],
     [-1, -2, -1]
 ];
-/*
- * This function is necessary since javascript stores 2-dimensional image data
- * in 1-dimensional arrays
- *
- * Since this function can't return invalid indexes, it isn't very safe. Use wisely
- */
-function getIndex(x, y, width, height) {
-    return (width * y) + x;
-}
-exports.getIndex = getIndex;
 function getImageFromCanvas(canvas) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
 }
@@ -69,45 +59,40 @@ exports.convolve = convolve;
 /*
  * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
  */
-function convolve1d(image, kernel, preserveSign) {
-    if (preserveSign === void 0) { preserveSign = false; }
-    var output = new ImageData(image.width, image.height);
-    var intermediate = new ImageData(image.width, image.height);
+function convolve1d(image, kernel) {
+    var output = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    var intermediate = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     var offset = Math.floor(kernel.length / 2);
     //first convolution
-    for (var x = 0; x < image.width; x++) {
-        for (var y = 0; y < image.height; y++) {
-            var index = getIndex(x, y, image.width, image.height) * 4;
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
             var raccumulator = 0;
             var gaccumulator = 0;
             var baccumulator = 0;
             for (var i = 0; i < kernel.length; i++) {
-                raccumulator += kernel[i] * image.data[getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4];
-                gaccumulator += kernel[i] * image.data[(getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4) + 1];
-                baccumulator += kernel[i] * image.data[(getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4) + 2];
+                raccumulator += kernel[i] * image.r[Math.abs(x + offset - i) % image.getWidth()][y];
+                gaccumulator += kernel[i] * image.g[Math.abs(x + offset - i) % image.getWidth()][y];
+                baccumulator += kernel[i] * image.b[Math.abs(x + offset - i) % image.getWidth()][y];
             }
-            intermediate.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
-            intermediate.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
-            intermediate.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
-            intermediate.data[index + 3] = 255;
+            intermediate.r[x][y] = Math.abs(raccumulator);
+            intermediate.g[x][y] = Math.abs(gaccumulator);
+            intermediate.b[x][y] = Math.abs(baccumulator);
         }
     }
     //second convolution
-    for (var x = 0; x < image.width; x++) {
-        for (var y = 0; y < image.height; y++) {
-            var index = getIndex(x, y, image.width, image.height) * 4;
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
             var raccumulator = 0;
             var gaccumulator = 0;
             var baccumulator = 0;
             for (var i = 0; i < kernel.length; i++) {
-                raccumulator += kernel[i] * intermediate.data[getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4];
-                gaccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 1];
-                baccumulator += kernel[i] * intermediate.data[(getIndex(x + offset - i, y, intermediate.width, intermediate.height) * 4) + 2];
+                raccumulator += kernel[i] * intermediate.r[x][Math.abs(y + offset - i) % image.getHeight()];
+                gaccumulator += kernel[i] * intermediate.g[x][Math.abs(y + offset - i) % image.getHeight()];
+                baccumulator += kernel[i] * intermediate.b[x][Math.abs(y + offset - i) % image.getHeight()];
             }
-            output.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
-            output.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
-            output.data[index + 2] = preserveSign ? baccumulator : Math.abs(baccumulator);
-            output.data[index + 3] = 255;
+            output.r[x][y] = Math.abs(raccumulator);
+            output.g[x][y] = Math.abs(gaccumulator);
+            output.b[x][y] = Math.abs(baccumulator);
         }
     }
     return output;
