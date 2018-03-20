@@ -11,20 +11,17 @@ var Vision = __importStar(require("../vision"));
 var blurring = false;
 var animating = false;
 function computeFrame() {
-    var videoElement = document.getElementById('webcam');
-    var camfeedctx = document.getElementById('camfeed').getContext('2d');
-    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
-    var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
     if (blurring) {
-        inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
+        inputImage = Vision.RGBConvolve(inputImage, Vision.gaussKernel, 5, 5);
     }
-    inputImage = Vision.greyScale(inputImage);
-    var x = Vision.convolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.convolve(inputImage, Vision.sobelRotated, 3, 3);
-    var both = Vision.combineConvolutions(x, y);
-    document.getElementById('sobelx').getContext('2d').putImageData(x, 0, 0);
-    document.getElementById('sobely').getContext('2d').putImageData(y, 0, 0);
-    document.getElementById('sobelboth').getContext('2d').putImageData(both, 0, 0);
+    inputImage = Vision.RGBGreyScale(inputImage);
+    var x = Vision.RGBConvolve(inputImage, Vision.sobelKernel, 3, 3);
+    var y = Vision.RGBConvolve(inputImage, Vision.sobelRotated, 3, 3);
+    var both = Vision.RGBcombineConvolutions(x, y);
+    document.getElementById('sobelx').getContext('2d').putImageData(x.asImageData(), 0, 0);
+    document.getElementById('sobely').getContext('2d').putImageData(y.asImageData(), 0, 0);
+    document.getElementById('sobelboth').getContext('2d').putImageData(both.asImageData(), 0, 0);
     if (animating) {
         requestAnimationFrame(computeFrame);
     }

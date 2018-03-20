@@ -5,28 +5,19 @@ let blurring = false;
 let animating = false;
 
 function computeFrame(): void {
-	let videoElement = document.getElementById('webcam') as HTMLVideoElement;
-	let camfeedctx = (document.getElementById('camfeed') as HTMLCanvasElement).getContext('2d');
-	camfeedctx.drawImage(
-		videoElement,
-		0,
-		0,
-		videoElement.videoWidth * 0.75,
-		videoElement.videoHeight * 0.75
-	);
+	let inputImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
 
-	let inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
 	if (blurring) {
-		inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
+		inputImage = Vision.RGBConvolve(inputImage, Vision.gaussKernel, 5, 5);
 	}
-	inputImage = Vision.greyScale(inputImage);
-	let x = Vision.convolve(inputImage, Vision.sobelKernel, 3, 3);
-	let y = Vision.convolve(inputImage, Vision.sobelRotated, 3, 3);
-	let both = Vision.combineConvolutions(x, y);
+	inputImage = Vision.RGBGreyScale(inputImage);
+	let x = Vision.RGBConvolve(inputImage, Vision.sobelKernel, 3, 3);
+	let y = Vision.RGBConvolve(inputImage, Vision.sobelRotated, 3, 3);
+	let both = Vision.RGBcombineConvolutions(x, y);
 
-	(document.getElementById('sobelx') as HTMLCanvasElement).getContext('2d').putImageData(x, 0, 0);
-	(document.getElementById('sobely') as HTMLCanvasElement).getContext('2d').putImageData(y, 0, 0);
-	(document.getElementById('sobelboth') as HTMLCanvasElement).getContext('2d').putImageData(both, 0, 0);
+	(document.getElementById('sobelx') as HTMLCanvasElement).getContext('2d').putImageData(x.asImageData(), 0, 0);
+	(document.getElementById('sobely') as HTMLCanvasElement).getContext('2d').putImageData(y.asImageData(), 0, 0);
+	(document.getElementById('sobelboth') as HTMLCanvasElement).getContext('2d').putImageData(both.asImageData(), 0, 0);
 
 	if (animating) {
 		requestAnimationFrame(computeFrame);

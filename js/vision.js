@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var RGBImage_1 = require("./RGBImage");
 exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
@@ -27,6 +28,18 @@ function getIndex(x, y, width, height) {
     return (width * y) + x;
 }
 exports.getIndex = getIndex;
+function getImageFromCanvas(canvas) {
+    return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
+}
+exports.getImageFromCanvas = getImageFromCanvas;
+function getImageFromVideo(videoElement, canvas, scale) {
+    if (scale === void 0) { scale = 1; }
+    var width = videoElement.videoWidth * scale;
+    var height = videoElement.videoHeight * scale;
+    canvas.getContext('2d').drawImage(videoElement, 0, 0, width, height);
+    return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, width, height));
+}
+exports.getImageFromVideo = getImageFromVideo;
 /*
  * Convolves a greyscale image with kernel
  */
@@ -34,15 +47,14 @@ function convolve(image, kernel, kernelWidth, kernelHeight) {
     var output = new ImageData(image.width, image.height);
     var offsetX = Math.floor(kernelWidth / 2);
     var offsetY = Math.floor(kernelHeight / 2);
-    // Done 1 pixel inwards from image boundary. Edges/corners will be handled separately
-    for (var x = 1; x < image.width - 1; x++) {
-        for (var y = 1; y < image.height - 1; y++) {
+    for (var x = 0; x < image.width; x++) {
+        for (var y = 0; y < image.height; y++) {
             var raccumulator = 0;
             var gaccumulator = 0;
             var baccumulator = 0;
             for (var kx = 0; kx < kernelWidth; kx++) {
                 for (var ky = 0; ky < kernelHeight; ky++) {
-                    raccumulator += kernel[kx][ky] * image.data[getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4];
+                    raccumulator += kernel[kx][ky] * image.data[getIndex(Math.abs(x + offsetX - kx) % image.width, Math.abs(y + offsetY - ky) % image.height, image.width, image.height) * 4];
                     gaccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 1];
                     baccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 2];
                 }
@@ -57,69 +69,32 @@ function convolve(image, kernel, kernelWidth, kernelHeight) {
     return output;
 }
 exports.convolve = convolve;
-/*
- * I swear there is a more elegant way to do this, but I can't think of it. For now I'm stuck with this monstrosity
- */
-function convolveCorners(image, kernel, kernelWidth, kernelHeight) {
-    var result = new Array(12);
-    // top left
-    for (var i = 0; i < 3; i++) {
-        var acc = 0;
-        acc += kernel[0][0] * image.data[0 + i];
-        acc += kernel[0][1] * image.data[0 + i];
-        acc += kernel[0][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][0] * image.data[0 + i];
-        acc += kernel[1][1] * image.data[0 + i];
-        acc += kernel[1][2] * image.data[(getIndex(0, 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][0] * image.data[4 + i];
-        acc += kernel[2][1] * image.data[4 + i];
-        acc += kernel[2][2] * image.data[(getIndex(1, 1, image.width, image.height) * 4) + i];
-        result[i] = acc;
+function RGBConvolve(image, kernel, kernelWidth, kernelHeight) {
+    var width = image.getWidth();
+    var height = image.getHeight();
+    var output = RGBImage_1.RGBImage.fromDimensions(width, height);
+    var offsetX = Math.floor(kernelWidth / 2);
+    var offsetY = Math.floor(kernelHeight / 2);
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var raccumulator = 0;
+            var gaccumulator = 0;
+            var baccumulator = 0;
+            for (var kx = 0; kx < kernelWidth; kx++) {
+                for (var ky = 0; ky < kernelHeight; ky++) {
+                    raccumulator += kernel[kx][ky] * image.r[Math.abs(x + offsetX - kx) % width][Math.abs(y + offsetY - ky) % height];
+                    gaccumulator += kernel[kx][ky] * image.g[Math.abs(x + offsetX - kx) % width][Math.abs(y + offsetY - ky) % height];
+                    baccumulator += kernel[kx][ky] * image.b[Math.abs(x + offsetX - kx) % width][Math.abs(y + offsetY - ky) % height];
+                }
+            }
+            output.r[x][y] = raccumulator;
+            output.g[x][y] = gaccumulator;
+            output.b[x][y] = baccumulator;
+        }
     }
-    // top right
-    for (var i = 0; i < 3; i++) {
-        var acc = 0;
-        acc += kernel[0][0] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
-        acc += kernel[0][1] * image.data[(getIndex(image.width - 2, 0, image.width, image.height) * 4) + i];
-        acc += kernel[0][2] * image.data[(getIndex(image.width - 2, 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
-        acc += kernel[1][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
-        acc += kernel[1][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][0] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
-        acc += kernel[2][1] * image.data[(getIndex(image.width - 1, 0, image.width, image.height) * 4) + i];
-        acc += kernel[2][2] * image.data[(getIndex(image.width - 1, 1, image.width, image.height) * 4) + i];
-        result[3 + i] = acc;
-    }
-    // bottom left
-    for (var i = 0; i < 3; i++) {
-        var acc = 0;
-        acc += kernel[0][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[0][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[0][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][0] * image.data[(getIndex(0, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[1][1] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][2] * image.data[(getIndex(0, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][0] * image.data[(getIndex(1, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[2][1] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][2] * image.data[(getIndex(1, image.height - 1, image.width, image.height) * 4) + i];
-        result[6 + i] = acc;
-    }
-    // bottom right
-    for (var i = 0; i < 3; i++) {
-        var acc = 0;
-        acc += kernel[0][0] * image.data[(getIndex(image.width - 2, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[0][1] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[0][2] * image.data[(getIndex(image.width - 2, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[1][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[1][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][0] * image.data[(getIndex(image.width - 1, image.height - 2, image.width, image.height) * 4) + i];
-        acc += kernel[2][1] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
-        acc += kernel[2][2] * image.data[(getIndex(image.width - 1, image.height - 1, image.width, image.height) * 4) + i];
-        result[9 + i] = acc;
-    }
-    return result;
+    return output;
 }
+exports.RGBConvolve = RGBConvolve;
 /*
  * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
  */
@@ -136,9 +111,9 @@ function convolve1d(image, kernel, preserveSign) {
             var gaccumulator = 0;
             var baccumulator = 0;
             for (var i = 0; i < kernel.length; i++) {
-                raccumulator += kernel[i] * image.data[getIndex(x + offset - i, y, image.width, image.height) * 4];
-                gaccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 1];
-                baccumulator += kernel[i] * image.data[(getIndex(x + offset - i, y, image.width, image.height) * 4) + 2];
+                raccumulator += kernel[i] * image.data[getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4];
+                gaccumulator += kernel[i] * image.data[(getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4) + 1];
+                baccumulator += kernel[i] * image.data[(getIndex(Math.abs(x + offset - i) % image.width, y, image.width, image.height) * 4) + 2];
             }
             intermediate.data[index] = preserveSign ? raccumulator : Math.abs(raccumulator);
             intermediate.data[index + 1] = preserveSign ? gaccumulator : Math.abs(gaccumulator);
@@ -182,6 +157,19 @@ function greyScale(image) {
     return new ImageData(data, image.width, image.height);
 }
 exports.greyScale = greyScale;
+function RGBGreyScale(image) {
+    var width = image.getWidth();
+    var height = image.getHeight();
+    var result = RGBImage_1.RGBImage.fromDimensions(width, height);
+    for (var x = 0; x < width; x++) {
+        for (var y = 0; y < height; y++) {
+            var avg = Math.floor((image.r[x][y] + image.g[x][y] + image.b[x][y]) / 3);
+            result.r[x][y] = result.g[x][y] = result.b[x][y] = avg;
+        }
+    }
+    return result;
+}
+exports.RGBGreyScale = RGBGreyScale;
 function combineConvolutions(image1, image2) {
     var output = new ImageData(image1.width, image1.height);
     for (var i = 0; i < image1.data.length; i += 4) {
@@ -193,6 +181,26 @@ function combineConvolutions(image1, image2) {
     return output;
 }
 exports.combineConvolutions = combineConvolutions;
+function RGBcombineConvolutions(image1, image2) {
+    var width = image1.getWidth();
+    var height = image1.getHeight();
+    var output = RGBImage_1.RGBImage.fromDimensions(width, height);
+    for (var x = 0; x < width; x++) {
+        for (var y = 0; y < width; y++) {
+            var r1 = image1.r[x][y];
+            var r2 = image2.r[x][y];
+            var g1 = image1.g[x][y];
+            var g2 = image2.g[x][y];
+            var b1 = image1.b[x][y];
+            var b2 = image2.b[x][y];
+            output.r[x][y] = Math.floor(Math.sqrt((r1 * r1) + (r2 * r2)));
+            output.g[x][y] = Math.floor(Math.sqrt((g1 * g1) + (g2 * g2)));
+            output.b[x][y] = Math.floor(Math.sqrt((b1 * b1) + (b2 * b2)));
+        }
+    }
+    return output;
+}
+exports.RGBcombineConvolutions = RGBcombineConvolutions;
 function initCamera() {
     navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
         var webcamElement = document.getElementById('webcam');
@@ -200,8 +208,8 @@ function initCamera() {
         webcamElement.addEventListener('playing', function (event) {
             var canvases = document.getElementsByTagName('canvas');
             for (var i = 0; i < canvases.length; i++) {
-                canvases[i].width = webcamElement.videoWidth * 0.75;
-                canvases[i].height = webcamElement.videoHeight * 0.75;
+                canvases[i].width = webcamElement.videoWidth;
+                canvases[i].height = webcamElement.videoHeight;
             }
         });
     }).catch(function (err) {
