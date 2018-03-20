@@ -20,16 +20,6 @@ export const sobelRotated = [
 	[-1, -2, -1]
 ];
 
-/*
- * This function is necessary since javascript stores 2-dimensional image data
- * in 1-dimensional arrays
- * 
- * Since this function can't return invalid indexes, it isn't very safe. Use wisely
- */
-export function getIndex(x: number, y: number, width: number, height: number): number {
-	return (width * y) + x;
-}
-
 export function getImageFromCanvas(canvas: HTMLCanvasElement) : RGBImage {
 	return RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
 }
