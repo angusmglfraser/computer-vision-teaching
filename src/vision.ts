@@ -1,4 +1,5 @@
 import {RGBImage} from './RGBImage';
+
 declare var GPU:any
 
 export const gaussKernel: Array<Array<number>> = [
