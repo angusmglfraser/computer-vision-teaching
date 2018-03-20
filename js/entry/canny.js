@@ -8,6 +8,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var Vision = __importStar(require("../vision"));
+var RGBImage_1 = require("../RGBImage");
 var EdgeStrength;
 (function (EdgeStrength) {
     EdgeStrength[EdgeStrength["NO_EDGE"] = 0] = "NO_EDGE";
@@ -16,34 +17,36 @@ var EdgeStrength;
 })(EdgeStrength || (EdgeStrength = {}));
 var animating = false;
 function computeEdgeAngles(image1, image2) {
-    var output = new Uint8ClampedArray(image1.width * image1.height);
-    for (var i = 0; i < image1.data.length; i += 4) {
-        var angle = Math.atan2(image1.data[i], image2.data[i]) * 180 / Math.PI;
-        output[i / 4] = angle;
+    var output = new Array(image1.getWidth());
+    for (var x = 0; x < image1.getWidth(); x++) {
+        output[x] = new Array(image1.getHeight());
+        for (var y = 0; y < image1.getHeight(); y++) {
+            var angle = Math.atan2(image1.r[x][y], image2.r[x][y]) * 180 / Math.PI;
+            output[x][y] = angle;
+        }
     }
     return output;
 }
 function edgeThinning(image, gradients) {
-    var result = new ImageData(image.width, image.height);
-    for (var x = 0; x < image.width; x++) {
-        for (var y = 0; y < image.height; y++) {
-            var index = Vision.getIndex(x, y, image.width, image.height) * 4;
-            var angle = gradients[index / 4];
+    var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var angle = gradients[x][y];
             if (angle < 22.5) {
-                if (image.data[index] == Math.max(image.data[Vision.getIndex(x + 1, y, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y, image.width, image.height) * 4], image.data[index])) {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                if (image.r[x][y] == Math.max(image.r[x + 1][y], image.r[x - 1][y], image.r[x][y])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 }
                 else {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             }
             else if (angle < 67.5) {
-                if (image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y + 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y - 1, image.width, image.height) * 4])
-                    || image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y - 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y + 1, image.width, image.height) * 4])) {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                if (image.r[x][y] == Math.max(image.r[x][y], image.r[x + 1][y + 1], image.r[x - 1][y - 1])
+                    || image.r[x][y] == Math.max(image.r[x][y], image.r[x + 1][y - 1], image.r[x - 1][y + 1])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 }
                 else {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             }
             else {
@@ -115,10 +118,7 @@ function edgeTracking(strengths) {
     return output;
 }
 function computeFrame() {
-    var videoElement = document.getElementById('webcam');
-    var camfeedctx = document.getElementById('camfeed').getContext('2d');
-    camfeedctx.drawImage(videoElement, 0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
-    var inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
     var greyScaled = Vision.greyScale(inputImage);
     var blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
     var gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);

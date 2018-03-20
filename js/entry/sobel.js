@@ -13,15 +13,15 @@ var animating = false;
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
     if (blurring) {
-        inputImage = Vision.RGBConvolve(inputImage, Vision.gaussKernel, 5, 5);
+        inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
     }
-    inputImage = Vision.RGBGreyScale(inputImage);
-    var x = Vision.RGBConvolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.RGBConvolve(inputImage, Vision.sobelRotated, 3, 3);
-    var both = Vision.RGBcombineConvolutions(x, y);
-    document.getElementById('sobelx').getContext('2d').putImageData(x.asImageData(), 0, 0);
-    document.getElementById('sobely').getContext('2d').putImageData(y.asImageData(), 0, 0);
-    document.getElementById('sobelboth').getContext('2d').putImageData(both.asImageData(), 0, 0);
+    inputImage = Vision.greyScale(inputImage);
+    var x = Vision.convolve(inputImage, Vision.sobelKernel, 3, 3);
+    var y = Vision.convolve(inputImage, Vision.sobelRotated, 3, 3);
+    var both = Vision.combineConvolutions(x, y);
+    x.draw(document.getElementById('sobelx'));
+    y.draw(document.getElementById('sobely'));
+    both.draw(document.getElementById('sobelboth'));
     if (animating) {
         requestAnimationFrame(computeFrame);
     }

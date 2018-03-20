@@ -59,6 +59,10 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    RGBImage.prototype.draw = function (canvas) {
+        var data = this.asImageData();
+        canvas.getContext('2d').putImageData(data, 0, 0);
+    };
     return RGBImage;
 }());
 exports.RGBImage = RGBImage;

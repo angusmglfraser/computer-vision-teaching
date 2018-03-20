@@ -40,36 +40,7 @@ function getImageFromVideo(videoElement, canvas, scale) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, width, height));
 }
 exports.getImageFromVideo = getImageFromVideo;
-/*
- * Convolves a greyscale image with kernel
- */
 function convolve(image, kernel, kernelWidth, kernelHeight) {
-    var output = new ImageData(image.width, image.height);
-    var offsetX = Math.floor(kernelWidth / 2);
-    var offsetY = Math.floor(kernelHeight / 2);
-    for (var x = 0; x < image.width; x++) {
-        for (var y = 0; y < image.height; y++) {
-            var raccumulator = 0;
-            var gaccumulator = 0;
-            var baccumulator = 0;
-            for (var kx = 0; kx < kernelWidth; kx++) {
-                for (var ky = 0; ky < kernelHeight; ky++) {
-                    raccumulator += kernel[kx][ky] * image.data[getIndex(Math.abs(x + offsetX - kx) % image.width, Math.abs(y + offsetY - ky) % image.height, image.width, image.height) * 4];
-                    gaccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 1];
-                    baccumulator += kernel[kx][ky] * image.data[(getIndex(x + offsetX - kx, y + offsetY - ky, image.width, image.height) * 4) + 2];
-                }
-            }
-            var index = getIndex(x, y, image.width, image.height) * 4;
-            output.data[index] = Math.abs(raccumulator);
-            output.data[index + 1] = Math.abs(gaccumulator);
-            output.data[index + 2] = Math.abs(baccumulator);
-            output.data[index + 3] = 255;
-        }
-    }
-    return output;
-}
-exports.convolve = convolve;
-function RGBConvolve(image, kernel, kernelWidth, kernelHeight) {
     var width = image.getWidth();
     var height = image.getHeight();
     var output = RGBImage_1.RGBImage.fromDimensions(width, height);
@@ -94,7 +65,7 @@ function RGBConvolve(image, kernel, kernelWidth, kernelHeight) {
     }
     return output;
 }
-exports.RGBConvolve = RGBConvolve;
+exports.convolve = convolve;
 /*
  * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
  */
@@ -142,22 +113,7 @@ function convolve1d(image, kernel, preserveSign) {
     return output;
 }
 exports.convolve1d = convolve1d;
-/*
- * Returns a greyscaled version of an image
- */
 function greyScale(image) {
-    var data = new Uint8ClampedArray(image.data.length);
-    for (var i = 0; i < image.data.length; i += 4) {
-        var avg = image.data[i] + image.data[i + 1] + image.data[i + 2];
-        avg = avg / 3;
-        data[i] = data[i + 1] = data[i + 2] = avg;
-        // Set opacity to max. Remember, this is RGBA, not RGB
-        data[i + 3] = 255;
-    }
-    return new ImageData(data, image.width, image.height);
-}
-exports.greyScale = greyScale;
-function RGBGreyScale(image) {
     var width = image.getWidth();
     var height = image.getHeight();
     var result = RGBImage_1.RGBImage.fromDimensions(width, height);
@@ -169,19 +125,8 @@ function RGBGreyScale(image) {
     }
     return result;
 }
-exports.RGBGreyScale = RGBGreyScale;
+exports.greyScale = greyScale;
 function combineConvolutions(image1, image2) {
-    var output = new ImageData(image1.width, image1.height);
-    for (var i = 0; i < image1.data.length; i += 4) {
-        var val1 = image1.data[i];
-        var val2 = image2.data[i];
-        output.data[i] = output.data[i + 1] = output.data[i + 2] = Math.sqrt((val1 * val1) + (val2 * val2));
-        output.data[i + 3] = 255;
-    }
-    return output;
-}
-exports.combineConvolutions = combineConvolutions;
-function RGBcombineConvolutions(image1, image2) {
     var width = image1.getWidth();
     var height = image1.getHeight();
     var output = RGBImage_1.RGBImage.fromDimensions(width, height);
@@ -200,7 +145,7 @@ function RGBcombineConvolutions(image1, image2) {
     }
     return output;
 }
-exports.RGBcombineConvolutions = RGBcombineConvolutions;
+exports.combineConvolutions = combineConvolutions;
 function initCamera() {
     navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
         var webcamElement = document.getElementById('webcam');

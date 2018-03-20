@@ -1,4 +1,5 @@
 import * as Vision from '../vision';
+import { RGBImage } from '../RGBImage';
 
 enum EdgeStrength {
     NO_EDGE,
@@ -8,87 +9,83 @@ enum EdgeStrength {
 
 let animating = false;
 
-function computeEdgeAngles(image1: ImageData, image2: ImageData): Uint8ClampedArray {
-    let output = new Uint8ClampedArray(image1.width * image1.height);
-    for (let i = 0; i < image1.data.length; i += 4) {
-        let angle = Math.atan2(image1.data[i], image2.data[i]) * 180 / Math.PI;
-        output[i / 4] = angle;
+function computeEdgeAngles(image1: RGBImage, image2: RGBImage): Array<Array<number>> {
+    let output = new Array<Array<number>>(image1.getWidth());
+    for (let x = 0; x < image1.getWidth(); x++) {
+        output[x] = new Array<number>(image1.getHeight());
+        for (let y = 0; y < image1.getHeight(); y++) {
+            let angle = Math.atan2(image1.r[x][y], image2.r[x][y]) * 180 / Math.PI;
+            output[x][y] = angle;
+        }
     }
     return output;
 }
 
-function edgeThinning(image: ImageData, gradients: Uint8ClampedArray): ImageData {
-    let result = new ImageData(image.width, image.height);
-    for (let x = 0; x < image.width; x++) {
-        for (let y = 0; y < image.height; y++) {
-            let index = Vision.getIndex(x, y, image.width, image.height) * 4;
-
-            let angle = gradients[index / 4];
+function edgeThinning(image: RGBImage, gradients: Array<Array<number>>): RGBImage {
+    let result = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (let x = 0; x < image.getWidth(); x++) {
+        for (let y = 0; y < image.getHeight(); y++) {
+            let angle = gradients[x][y];
             if (angle < 22.5) {
-                if (image.data[index] == Math.max(image.data[Vision.getIndex(x + 1, y, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y, image.width, image.height) * 4], image.data[index])) {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                if (image.r[x][y] == Math.max(image.r[x+1][y], image.r[x-1][y], image.r[x][y])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             } else if (angle < 67.5) {
-                if (image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y + 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y - 1, image.width, image.height) * 4])
-                    || image.data[index] == Math.max(image.data[index], image.data[Vision.getIndex(x + 1, y - 1, image.width, image.height) * 4], image.data[Vision.getIndex(x - 1, y + 1, image.width, image.height) * 4])) {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                if (image.r[x][y] == Math.max(image.r[x][y], image.r[x+1][y+1], image.r[x-1][y-1])
+                    || image.r[x][y] == Math.max(image.r[x][y], image.r[x+1][y-1], image.r[x-1][y+1])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             } else {
-                if (image.data[index] == Math.max(image.data[Vision.getIndex(x, y + 1, image.width, image.height) * 4], image.data[Vision.getIndex(x, y - 1, image.width, image.height) * 4], image.data[index])) {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = image.data[index];
+                if (image.r[x][y] == Math.max(image.r[x][y+1], image.r[x][y-1], image.r[x][y])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
-                    result.data[index] = result.data[index + 1] = result.data[index + 2] = 0;
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
             }
-            result.data[index + 3] = 255;
         }
     }
     return result;
 }
 
-function thresholding(image: ImageData, upperThreshold: number, lowerThreshold: number): { data: Array<EdgeStrength>, width: number, height: number } {
-    let strengths = {
-        data: new Array<EdgeStrength>(image.width, image.height),
-        width: image.width,
-        height: image.height
-    };
-    for (let x = 0; x < image.width; x++) {
-        for (let y = 0; y < image.height; y++) {
-
-            let index = Vision.getIndex(x, y, image.width, image.height) * 4;
-            if (image.data[index] > upperThreshold) {
-                strengths.data[index / 4] = EdgeStrength.STRONG_EDGE;
-            } else if (image.data[index] > lowerThreshold) {
-                strengths.data[index / 4] = EdgeStrength.WEAK_EDGE;
+function thresholding(image: RGBImage, threshold1: number, threshold2: number): Array<Array<EdgeStrength>> {
+    let strengths = new Array<Array<EdgeStrength>>(image.getWidth());
+    let upper = Math.max(threshold1, threshold2);
+    let lower = Math.min(threshold1, threshold2);
+    for (let x = 0; x < image.getWidth(); x++) {
+        strengths[x] = new Array<EdgeStrength>(image.getHeight());
+        for (let y = 0; y < image.getHeight(); y++) {
+            if (image.r[x][y] > upper) {
+                strengths[x][y] = EdgeStrength.STRONG_EDGE;
+            } else if (image.r[x][y] > lower) {
+                strengths[x][y] = EdgeStrength.WEAK_EDGE;
             } else {
-                strengths[index / 4] = 0;
+                strengths[x][y] = 0;
             }
         }
     }
     return strengths;
 }
 
-function edgeTracking(strengths: { data: Array<EdgeStrength>, width: number, height: number }) {
-    let output = new ImageData(strengths.width, strengths.height);
+function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage{
+    let width = strengths.length;
+    let height = strengths[0].length;
+    let output = RGBImage.fromDimensions(width, height);
 
-    for (let x = 0; x < strengths.width; x++) {
-        for (let y = 0; y < strengths.height; y++) {
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
 
-            let index = Vision.getIndex(x, y, strengths.width, strengths.height);
-            let imageIndex = index * 4
-
-            if (strengths.data[index] === EdgeStrength.STRONG_EDGE) {
-                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = 255;
-            } else if (strengths.data[index] === EdgeStrength.WEAK_EDGE) {
+            if (strengths[x][y] === EdgeStrength.STRONG_EDGE) {
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = 255;
+            } else if (strengths[x][y] === EdgeStrength.WEAK_EDGE) {
                 // blob analysis
                 let isEdge = false;
                 for (let blobx = x - 1; blobx <= x + 1; blobx++) {
                     for (let bloby = y - 1; bloby <= y + 1; bloby++) {
-                        if (strengths.data[Vision.getIndex(blobx, bloby, strengths.width, strengths.height)] === EdgeStrength.STRONG_EDGE) {
+                        if (strengths[blobx][bloby] === EdgeStrength.STRONG_EDGE) {
                             isEdge = true;
                             break;
                         }
@@ -97,28 +94,17 @@ function edgeTracking(strengths: { data: Array<EdgeStrength>, width: number, hei
                         break;
                     }
                 }
-                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = isEdge ? 255 : 0;
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = isEdge ? 255 : 0;
             } else {
-                output.data[imageIndex] = output.data[imageIndex + 1] = output.data[imageIndex + 2] = 0;
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
             }
-            output.data[imageIndex + 3] = 255;
         }
     }
     return output;
 }
 
 function computeFrame(): void {
-    let videoElement = document.getElementById('webcam') as HTMLVideoElement;
-    let camfeedctx = (document.getElementById('camfeed') as HTMLCanvasElement).getContext('2d');
-    camfeedctx.drawImage(
-        videoElement,
-        0,
-        0,
-        videoElement.videoWidth * 0.75,
-        videoElement.videoHeight * 0.75
-    );
-
-    let inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    let inputImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
     let greyScaled = Vision.greyScale(inputImage);
     let blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
     let gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);
@@ -134,8 +120,7 @@ function computeFrame(): void {
 
     let output = edgeTracking(thresholded);
 
-
-    (document.getElementById('cannyoutput') as HTMLCanvasElement).getContext('2d').putImageData(output, 0, 0);
+    output.draw(document.getElementById('cannyoutput') as HTMLCanvasElement);
 
     if (animating) {
         requestAnimationFrame(computeFrame);

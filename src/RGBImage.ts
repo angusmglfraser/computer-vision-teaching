@@ -73,4 +73,9 @@ export class RGBImage {
 
 		return result;
 	}
+
+	draw(canvas: HTMLCanvasElement) {
+		let data = this.asImageData();
+		canvas.getContext('2d').putImageData(data,0,0);
+	}
 }

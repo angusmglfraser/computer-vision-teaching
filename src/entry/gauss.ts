@@ -1,4 +1,5 @@
 import * as Vision from '../vision';
+import { RGBImage } from '../RGBImage';
 
 let animating = false;
 let stdDev: number = +(document.getElementById('stdDev') as HTMLInputElement).value;
@@ -50,21 +51,12 @@ function writeMatrix(matrix: Array<Array<number>>): void {
 }
 
 function computeFrame(): void {
-    let videoElement = document.getElementById('webcam') as HTMLVideoElement;
-    let camfeedctx = (document.getElementById('camfeed') as HTMLCanvasElement).getContext('2d');
-    camfeedctx.drawImage(
-        videoElement,
-        0,
-        0,
-        videoElement.videoWidth * 0.75,
-        videoElement.videoHeight * 0.75
-    );
+    
+    let inputImage: RGBImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
 
-    let inputImage = camfeedctx.getImageData(0, 0, videoElement.videoWidth * 0.75, videoElement.videoHeight * 0.75);
+    let outputImage: RGBImage = Vision.convolve1d(inputImage, convolutionKernel);
 
-    let outputImage: ImageData = Vision.convolve1d(inputImage, convolutionKernel);
-
-    (document.getElementById('convolutionout') as HTMLCanvasElement).getContext('2d').putImageData(outputImage, 0, 0);
+    outputImage.draw(document.getElementById('convolutionout') as HTMLCanvasElement);
 
     if (animating) {
         requestAnimationFrame(computeFrame);
