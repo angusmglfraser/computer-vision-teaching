@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Moving Average Background Subtraction</title>
+    </head>
+    <body>
+        <h1>Naive Background Subtraction</h1>
+        <button id="startBtn">Start Background Subtraction</button>
+        <button id="stopBtn">Stop Background Subtraction</button>
+        <input type="range" min="0" max="255" value="80" class="slider" id="threshold"></input>
+        <input type="number" min="1" max="150" value="20" id="bufferSize"></input>
+        <br />
+        <canvas id="camfeed"></canvas>
+        <canvas id="foreground"></canvas>
+        <canvas id="backgroundModel"></canvas>
+        
+        <video id="webcam" autoplay style="display: none"></video>
+
+        <script src="js/bundles/bgsub2.js"></script>
+    </body>
+</html>

@@ -2,10 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage = /** @class */ (function () {
     function RGBImage() {
+        // Intentionally blank and private. Use the static constructors. This is done because
+        // typescript doesn't allow constructor overloading. To instantiate and RGBImage,
+        // instead of using 
+        //     new RGBImage(...);
+        // use
+        //     RGBImage.fromDimensions();
+        // or
+        //     RGBImage.fromImageData();
     }
     RGBImage.getIndex = function (x, y, width, height) {
         return (width * y) + x;
     };
+    /**
+     * Constructor to initialise a blank image from given dimensions
+     * @param width width of the image
+     * @param height height of the image
+     */
     RGBImage.fromDimensions = function (width, height) {
         var result = new RGBImage();
         result.width = width;
@@ -20,6 +33,10 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Constructor to initialise an image from Javascript's ImageData class
+     * @param image
+     */
     RGBImage.fromImageData = function (image) {
         var result = new RGBImage();
         result.width = image.width;
@@ -40,12 +57,44 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Returns a copy of this image
+     * @param image
+     */
+    RGBImage.clone = function (image) {
+        var result = new RGBImage();
+        result.width = image.width;
+        result.height = image.height;
+        result.r = new Array(result.width);
+        result.g = new Array(result.width);
+        result.b = new Array(result.width);
+        for (var x = 0; x < result.width; x++) {
+            result.r[x] = new Array(result.height);
+            result.g[x] = new Array(result.height);
+            result.b[x] = new Array(result.height);
+            for (var y = 0; y < result.height; y++) {
+                result.r[x][y] = image.r[x][y];
+                result.g[x][y] = image.g[x][y];
+                result.b[x][y] = image.b[x][y];
+            }
+        }
+        return result;
+    };
+    /**
+     * Returns the image's width
+     */
     RGBImage.prototype.getWidth = function () {
         return this.width;
     };
+    /**
+     * Returns the image's height
+     */
     RGBImage.prototype.getHeight = function () {
         return this.height;
     };
+    /**
+     * Returns the image in Javascript's ImageData format.
+     */
     RGBImage.prototype.asImageData = function () {
         var result = new ImageData(this.width, this.height);
         for (var x = 0; x < this.width; x++) {
@@ -59,6 +108,10 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Draws this image on a canvas
+     * @param canvas the canvas on which the image is to be drawn
+     */
     RGBImage.prototype.draw = function (canvas) {
         var data = this.asImageData();
         canvas.getContext('2d').putImageData(data, 0, 0);

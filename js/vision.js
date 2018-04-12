@@ -18,10 +18,20 @@ exports.sobelRotated = [
     [0, 0, 0],
     [-1, -2, -1]
 ];
+/**
+ * Returns the current frame on a canvas
+ * @param canvas
+ */
 function getImageFromCanvas(canvas) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
 }
 exports.getImageFromCanvas = getImageFromCanvas;
+/**
+ * Returns the current frame from a video element
+ * @param videoElement the video element the frame is to be grabbed from
+ * @param canvas the canvas on which the frame is to be drawn
+ * @param scale the scaling factor. Default is 1
+ */
 function getImageFromVideo(videoElement, canvas, scale) {
     if (scale === void 0) { scale = 1; }
     var width = videoElement.videoWidth * scale;
@@ -30,6 +40,13 @@ function getImageFromVideo(videoElement, canvas, scale) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, width, height));
 }
 exports.getImageFromVideo = getImageFromVideo;
+/**
+ * Convolves an image with a kernel.
+ * @param image The image to be convolved
+ * @param kernel The convolution kernel
+ * @param kernelWidth The width of the kernel
+ * @param kernelHeight The height of the kernel
+ */
 function convolve(image, kernel, kernelWidth, kernelHeight) {
     var width = image.getWidth();
     var height = image.getHeight();
@@ -56,8 +73,14 @@ function convolve(image, kernel, kernelWidth, kernelHeight) {
     return output;
 }
 exports.convolve = convolve;
-/*
- * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
+/**
+ * This function is to be used when convolving an image with a symmetrical kernel. The kernel passed
+ * to this function has to be 1-dimensional. The image will then be convolved with the kernel in the
+ * x-direction, and the result of that will be convolved with the same kernel in the y-direction.
+ * Doing convolutions this way with symmetric kernels greatly reduces the number of calculations to be
+ * done, so use this wherever possible.
+ * @param image the image to be convolved
+ * @param kernel the 1-dimensional kernel
  */
 function convolve1d(image, kernel) {
     var output = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
@@ -98,6 +121,10 @@ function convolve1d(image, kernel) {
     return output;
 }
 exports.convolve1d = convolve1d;
+/**
+ * Returns a greyscaled version of an image
+ * @param image
+ */
 function greyScale(image) {
     var width = image.getWidth();
     var height = image.getHeight();
@@ -111,6 +138,13 @@ function greyScale(image) {
     return result;
 }
 exports.greyScale = greyScale;
+/**
+ * Performs a pythagorean combination of two images. Each pixel in the output image
+ * is equivalent to the sum of the squares of the corresponding pixel in the two
+ * input images.
+ * @param image1
+ * @param image2
+ */
 function combineConvolutions(image1, image2) {
     var width = image1.getWidth();
     var height = image1.getHeight();
@@ -131,6 +165,9 @@ function combineConvolutions(image1, image2) {
     return output;
 }
 exports.combineConvolutions = combineConvolutions;
+/**
+ * Initialises the webcam and scales all canvases on the page to the dimensions of the camera's image
+ */
 function initCamera() {
     navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
         var webcamElement = document.getElementById('webcam');

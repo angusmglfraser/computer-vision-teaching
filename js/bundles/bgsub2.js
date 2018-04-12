@@ -1,6 +1,174 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var RGBImage_1 = require("./RGBImage");
+var MovingAverageBackgroundSubtractor = /** @class */ (function () {
+    function MovingAverageBackgroundSubtractor(size) {
+        this.bufferSize = 1;
+        this.buffer = new Buffer(size);
+    }
+    MovingAverageBackgroundSubtractor.prototype.addFrame = function (image) {
+        if (this.currentBackground == null) {
+            this.currentBackground = RGBImage_1.RGBImage.clone(image);
+        }
+        var tempModel = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+        for (var x = 0; x < tempModel.getWidth(); x++) {
+            for (var y = 0; y < tempModel.getHeight(); y++) {
+                tempModel.r[x][y] = this.currentBackground.r[x][y] * this.bufferSize;
+                tempModel.g[x][y] = this.currentBackground.g[x][y] * this.bufferSize;
+                tempModel.b[x][y] = this.currentBackground.b[x][y] * this.bufferSize;
+            }
+        }
+        if (this.bufferSize < this.buffer.getCapacity()) {
+            this.bufferSize++;
+            this.buffer.add(image);
+            for (var x = 0; x < image.getWidth(); x++) {
+                for (var y = 0; y < image.getHeight(); y++) {
+                    tempModel.r[x][y] = (tempModel.r[x][y] + image.r[x][y]) / this.bufferSize;
+                    tempModel.g[x][y] = (tempModel.g[x][y] + image.g[x][y]) / this.bufferSize;
+                    tempModel.b[x][y] = (tempModel.b[x][y] + image.b[x][y]) / this.bufferSize;
+                }
+            }
+        }
+        else {
+            this.buffer.add(image);
+            var toRemove = this.buffer.removeFirstNode();
+            for (var x = 0; x < image.getWidth(); x++) {
+                for (var y = 0; y < image.getHeight(); y++) {
+                    tempModel.r[x][y] = (tempModel.r[x][y] - toRemove.r[x][y] + image.r[x][y]) / this.bufferSize;
+                    tempModel.g[x][y] = (tempModel.g[x][y] - toRemove.g[x][y] + image.g[x][y]) / this.bufferSize;
+                    tempModel.b[x][y] = (tempModel.b[x][y] - toRemove.b[x][y] + image.b[x][y]) / this.bufferSize;
+                }
+            }
+        }
+        this.currentBackground = tempModel;
+    };
+    MovingAverageBackgroundSubtractor.prototype.getBackgroundModel = function () {
+        return this.currentBackground;
+    };
+    MovingAverageBackgroundSubtractor.prototype.setBufferSize = function (num) {
+        if (num > this.bufferSize) {
+            this.buffer.setSize(num);
+        }
+        else {
+            this.buffer.setSize(num);
+            this.recalculateBackgroundModel();
+            this.bufferSize = this.buffer.getSize();
+        }
+    };
+    MovingAverageBackgroundSubtractor.prototype.recalculateBackgroundModel = function () {
+        var iter = new BufferIterator(this.buffer);
+        var background = RGBImage_1.RGBImage.fromDimensions(this.currentBackground.getWidth(), this.currentBackground.getHeight());
+        while (iter.hasNext()) {
+            var frame = iter.next();
+            for (var x = 0; x < this.currentBackground.getWidth(); x++) {
+                for (var y = 0; y < this.currentBackground.getHeight(); y++) {
+                    background.r[x][y] += frame.r[x][y];
+                    background.g[x][y] += frame.g[x][y];
+                    background.b[x][y] += frame.b[x][y];
+                }
+            }
+        }
+        for (var x = 0; x < this.currentBackground.getWidth(); x++) {
+            for (var y = 0; y < this.currentBackground.getHeight(); y++) {
+                background.r[x][y] = background.r[x][y] / this.bufferSize;
+                background.g[x][y] = background.g[x][y] / this.bufferSize;
+                background.b[x][y] = background.b[x][y] / this.bufferSize;
+            }
+        }
+    };
+    return MovingAverageBackgroundSubtractor;
+}());
+exports.MovingAverageBackgroundSubtractor = MovingAverageBackgroundSubtractor;
+var BufferIterator = /** @class */ (function () {
+    function BufferIterator(buf) {
+        this.currentNode = buf.getFirstNode();
+    }
+    BufferIterator.prototype.hasNext = function () {
+        return this.currentNode.next != null && this.currentNode.next != undefined;
+    };
+    BufferIterator.prototype.next = function () {
+        var res = this.currentNode.data;
+        this.currentNode = this.currentNode.next;
+        return res;
+    };
+    return BufferIterator;
+}());
+/**
+ * The data structure used for the frame buffer for moving average background subtraction. It's essentially a doubly
+ * linked list but it can have a fixed capacity and when that capacity is reached and a new object is added, the first
+ * node in the list is discarded.
+ */
+var Buffer = /** @class */ (function () {
+    function Buffer(capacity) {
+        this.capacity = capacity;
+        this.size = 0;
+    }
+    Buffer.prototype.add = function (obj) {
+        if (this.size == 0) {
+            this.first = new Node(obj);
+            this.last = this.first;
+            this.size++;
+        }
+        else if (this.size < this.capacity) {
+            this.last.next = new Node(obj);
+            this.last.next.previous = this.last;
+            this.last = this.last.next;
+            this.size++;
+        }
+        else {
+            this.last.next = new Node(obj);
+            this.last.next.previous = this.last;
+            this.last = this.last.next;
+            this.first = this.first.next;
+            this.first.previous = null;
+        }
+    };
+    Buffer.prototype.removeFirstNode = function () {
+        var result = this.first.data;
+        this.first = this.first.next;
+        this.first.previous = null;
+        return result;
+    };
+    Buffer.prototype.removeLastNode = function () {
+        var result = this.last.data;
+        this.last = this.last.previous;
+        this.last.next = null;
+        return result;
+    };
+    Buffer.prototype.getFirstNode = function () {
+        return this.first;
+    };
+    Buffer.prototype.getSize = function () {
+        return this.size;
+    };
+    Buffer.prototype.getCapacity = function () {
+        return this.capacity;
+    };
+    Buffer.prototype.setSize = function (num) {
+        if (this.capacity <= num) {
+            this.capacity = num;
+        }
+        else {
+            var diff = this.capacity - num;
+            for (var i = 0; i < diff; i++) {
+            }
+        }
+    };
+    return Buffer;
+}());
+var Node = /** @class */ (function () {
+    function Node(obj) {
+        this.data = obj;
+        this.previous = null;
+        this.next = null;
+    }
+    return Node;
+}());
+
+},{"./RGBImage":2}],2:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage = /** @class */ (function () {
     function RGBImage() {
         // Intentionally blank and private. Use the static constructors. This is done because
@@ -121,7 +289,7 @@ var RGBImage = /** @class */ (function () {
 }());
 exports.RGBImage = RGBImage;
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -131,142 +299,55 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var Vision = __importStar(require("../vision"));
+var MovingAverageBackgroundSubtraction_1 = require("../MovingAverageBackgroundSubtraction");
 var RGBImage_1 = require("../RGBImage");
-var EdgeStrength;
-(function (EdgeStrength) {
-    EdgeStrength[EdgeStrength["NO_EDGE"] = 0] = "NO_EDGE";
-    EdgeStrength[EdgeStrength["WEAK_EDGE"] = 1] = "WEAK_EDGE";
-    EdgeStrength[EdgeStrength["STRONG_EDGE"] = 2] = "STRONG_EDGE";
-})(EdgeStrength || (EdgeStrength = {}));
+var Vision = __importStar(require("../vision"));
+var bg;
 var animating = false;
-function computeEdgeAngles(image1, image2) {
-    var output = new Array(image1.getWidth());
-    for (var x = 0; x < image1.getWidth(); x++) {
-        output[x] = new Array(image1.getHeight());
-        for (var y = 0; y < image1.getHeight(); y++) {
-            var angle = Math.atan2(image1.r[x][y], image2.r[x][y]) * 180 / Math.PI;
-            output[x][y] = angle;
-        }
-    }
-    return output;
-}
-function edgeThinning(image, gradients) {
-    var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+var threshold = 80;
+var bufferSize = 20;
+var subtractor = new MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor(bufferSize);
+function getForeground(image, backgroundModel, thresh) {
+    backgroundModel = Vision.greyScale(backgroundModel);
+    var imageGreyscale = Vision.greyScale(image);
+    var foreground = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     for (var x = 0; x < image.getWidth(); x++) {
         for (var y = 0; y < image.getHeight(); y++) {
-            var angle = gradients[x][y];
-            if (angle < 22.5) {
-                if (image.r[x][y] == Math.max(image.r[(x + 1) % image.getWidth()][y], image.r[Math.abs(x - 1)][y], image.r[x][y])) {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
-                }
-                else {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
-                }
-            }
-            else if (angle < 67.5) {
-                if (image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][(y + 1) % image.getHeight()], image.r[Math.abs(x - 1)][Math.abs(y - 1)])
-                    || image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][Math.abs(y - 1)], image.r[Math.abs(x - 1)][(y + 1) % image.getHeight()])) {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
-                }
-                else {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
-                }
-            }
-            else {
-                if (image.r[x][y] == Math.max(image.r[x][(y + 1) % image.getHeight()], image.r[x][Math.abs(y - 1)], image.r[x][y])) {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
-                }
-                else {
-                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
-                }
+            var diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
+            if (diff > thresh) {
+                foreground.r[x][y] = image.r[x][y];
+                foreground.g[x][y] = image.g[x][y];
+                foreground.b[x][y] = image.b[x][y];
             }
         }
     }
-    return result;
-}
-function thresholding(image, threshold1, threshold2) {
-    var strengths = new Array(image.getWidth());
-    var upper = Math.max(threshold1, threshold2);
-    var lower = Math.min(threshold1, threshold2);
-    for (var x = 0; x < image.getWidth(); x++) {
-        strengths[x] = new Array(image.getHeight());
-        for (var y = 0; y < image.getHeight(); y++) {
-            if (image.r[x][y] > upper) {
-                strengths[x][y] = EdgeStrength.STRONG_EDGE;
-            }
-            else if (image.r[x][y] > lower) {
-                strengths[x][y] = EdgeStrength.WEAK_EDGE;
-            }
-            else {
-                strengths[x][y] = 0;
-            }
-        }
-    }
-    return strengths;
-}
-function edgeTracking(strengths) {
-    var width = strengths.length;
-    var height = strengths[0].length;
-    var output = RGBImage_1.RGBImage.fromDimensions(width, height);
-    for (var x = 0; x < width; x++) {
-        for (var y = 0; y < height; y++) {
-            if (strengths[x][y] === EdgeStrength.STRONG_EDGE) {
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = 255;
-            }
-            else if (strengths[x][y] === EdgeStrength.WEAK_EDGE) {
-                // blob analysis
-                var isEdge = false;
-                var val = 0;
-                for (var blobx = x - 1; blobx <= x + 1; blobx++) {
-                    for (var bloby = y - 1; bloby <= y + 1; bloby++) {
-                        if (strengths[Math.abs(blobx) % width][Math.abs(bloby) % height] === EdgeStrength.STRONG_EDGE) {
-                            isEdge = true;
-                            val = 255;
-                            break;
-                        }
-                    }
-                    if (isEdge) {
-                        break;
-                    }
-                }
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = val;
-            }
-            else {
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
-            }
-        }
-    }
-    return output;
+    return foreground;
 }
 function computeFrame() {
-    var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
-    var greyScaled = Vision.greyScale(inputImage);
-    var blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
-    var gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);
-    var gy = Vision.convolve(blurred, Vision.sobelRotated, 3, 3);
-    var intensity = Vision.combineConvolutions(gx, gy);
-    var directions = computeEdgeAngles(gx, gy);
-    var thinnedEdges = edgeThinning(intensity, directions);
-    var lowerThreshold = +document.getElementById('lowerThreshold').value;
-    var upperThreshold = +document.getElementById('upperThreshold').value;
-    var thresholded = thresholding(thinnedEdges, upperThreshold, lowerThreshold);
-    var output = edgeTracking(thresholded);
-    output.draw(document.getElementById('cannyoutput'));
+    var videoElement = document.getElementById('webcam');
+    var inputFrame = Vision.getImageFromVideo(videoElement, document.getElementById('camfeed'));
+    subtractor.addFrame(inputFrame);
+    bg = subtractor.getBackgroundModel();
+    var foreground = getForeground(inputFrame, bg, threshold);
+    foreground.draw(document.getElementById('foreground'));
+    bg.draw(document.getElementById('backgroundModel'));
     if (animating) {
-        console.log(requestAnimationFrame(computeFrame));
+        requestAnimationFrame(computeFrame);
     }
 }
+document.getElementById('startBtn').addEventListener('click', function (event) {
+    animating = true;
+    requestAnimationFrame(computeFrame);
+});
 document.getElementById('stopBtn').addEventListener('click', function (event) {
     animating = false;
 });
-document.getElementById('startBtn').addEventListener('click', function (event) {
-    animating = true;
-    computeFrame();
+document.getElementById('threshold').addEventListener('change', function (event) {
+    threshold = +this.value;
 });
 Vision.initCamera();
 
-},{"../RGBImage":1,"../vision":3}],3:[function(require,module,exports){
+},{"../MovingAverageBackgroundSubtraction":1,"../RGBImage":2,"../vision":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
@@ -454,4 +535,4 @@ function initCamera() {
 }
 exports.initCamera = initCamera;
 
-},{"./RGBImage":1}]},{},[2]);
+},{"./RGBImage":2}]},{},[3]);

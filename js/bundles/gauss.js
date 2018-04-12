@@ -3,10 +3,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage = /** @class */ (function () {
     function RGBImage() {
+        // Intentionally blank and private. Use the static constructors. This is done because
+        // typescript doesn't allow constructor overloading. To instantiate and RGBImage,
+        // instead of using 
+        //     new RGBImage(...);
+        // use
+        //     RGBImage.fromDimensions();
+        // or
+        //     RGBImage.fromImageData();
     }
     RGBImage.getIndex = function (x, y, width, height) {
         return (width * y) + x;
     };
+    /**
+     * Constructor to initialise a blank image from given dimensions
+     * @param width width of the image
+     * @param height height of the image
+     */
     RGBImage.fromDimensions = function (width, height) {
         var result = new RGBImage();
         result.width = width;
@@ -21,6 +34,10 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Constructor to initialise an image from Javascript's ImageData class
+     * @param image
+     */
     RGBImage.fromImageData = function (image) {
         var result = new RGBImage();
         result.width = image.width;
@@ -41,12 +58,44 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Returns a copy of this image
+     * @param image
+     */
+    RGBImage.clone = function (image) {
+        var result = new RGBImage();
+        result.width = image.width;
+        result.height = image.height;
+        result.r = new Array(result.width);
+        result.g = new Array(result.width);
+        result.b = new Array(result.width);
+        for (var x = 0; x < result.width; x++) {
+            result.r[x] = new Array(result.height);
+            result.g[x] = new Array(result.height);
+            result.b[x] = new Array(result.height);
+            for (var y = 0; y < result.height; y++) {
+                result.r[x][y] = image.r[x][y];
+                result.g[x][y] = image.g[x][y];
+                result.b[x][y] = image.b[x][y];
+            }
+        }
+        return result;
+    };
+    /**
+     * Returns the image's width
+     */
     RGBImage.prototype.getWidth = function () {
         return this.width;
     };
+    /**
+     * Returns the image's height
+     */
     RGBImage.prototype.getHeight = function () {
         return this.height;
     };
+    /**
+     * Returns the image in Javascript's ImageData format.
+     */
     RGBImage.prototype.asImageData = function () {
         var result = new ImageData(this.width, this.height);
         for (var x = 0; x < this.width; x++) {
@@ -60,6 +109,10 @@ var RGBImage = /** @class */ (function () {
         }
         return result;
     };
+    /**
+     * Draws this image on a canvas
+     * @param canvas the canvas on which the image is to be drawn
+     */
     RGBImage.prototype.draw = function (canvas) {
         var data = this.asImageData();
         canvas.getContext('2d').putImageData(data, 0, 0);
@@ -178,10 +231,20 @@ exports.sobelRotated = [
     [0, 0, 0],
     [-1, -2, -1]
 ];
+/**
+ * Returns the current frame on a canvas
+ * @param canvas
+ */
 function getImageFromCanvas(canvas) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
 }
 exports.getImageFromCanvas = getImageFromCanvas;
+/**
+ * Returns the current frame from a video element
+ * @param videoElement the video element the frame is to be grabbed from
+ * @param canvas the canvas on which the frame is to be drawn
+ * @param scale the scaling factor. Default is 1
+ */
 function getImageFromVideo(videoElement, canvas, scale) {
     if (scale === void 0) { scale = 1; }
     var width = videoElement.videoWidth * scale;
@@ -190,6 +253,13 @@ function getImageFromVideo(videoElement, canvas, scale) {
     return RGBImage_1.RGBImage.fromImageData(canvas.getContext('2d').getImageData(0, 0, width, height));
 }
 exports.getImageFromVideo = getImageFromVideo;
+/**
+ * Convolves an image with a kernel.
+ * @param image The image to be convolved
+ * @param kernel The convolution kernel
+ * @param kernelWidth The width of the kernel
+ * @param kernelHeight The height of the kernel
+ */
 function convolve(image, kernel, kernelWidth, kernelHeight) {
     var width = image.getWidth();
     var height = image.getHeight();
@@ -216,8 +286,14 @@ function convolve(image, kernel, kernelWidth, kernelHeight) {
     return output;
 }
 exports.convolve = convolve;
-/*
- * Use this for convolving with symmetrical kernels. It has to do far fewer operations. O(n) rather than O(n^2)
+/**
+ * This function is to be used when convolving an image with a symmetrical kernel. The kernel passed
+ * to this function has to be 1-dimensional. The image will then be convolved with the kernel in the
+ * x-direction, and the result of that will be convolved with the same kernel in the y-direction.
+ * Doing convolutions this way with symmetric kernels greatly reduces the number of calculations to be
+ * done, so use this wherever possible.
+ * @param image the image to be convolved
+ * @param kernel the 1-dimensional kernel
  */
 function convolve1d(image, kernel) {
     var output = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
@@ -258,6 +334,10 @@ function convolve1d(image, kernel) {
     return output;
 }
 exports.convolve1d = convolve1d;
+/**
+ * Returns a greyscaled version of an image
+ * @param image
+ */
 function greyScale(image) {
     var width = image.getWidth();
     var height = image.getHeight();
@@ -271,6 +351,13 @@ function greyScale(image) {
     return result;
 }
 exports.greyScale = greyScale;
+/**
+ * Performs a pythagorean combination of two images. Each pixel in the output image
+ * is equivalent to the sum of the squares of the corresponding pixel in the two
+ * input images.
+ * @param image1
+ * @param image2
+ */
 function combineConvolutions(image1, image2) {
     var width = image1.getWidth();
     var height = image1.getHeight();
@@ -291,6 +378,9 @@ function combineConvolutions(image1, image2) {
     return output;
 }
 exports.combineConvolutions = combineConvolutions;
+/**
+ * Initialises the webcam and scales all canvases on the page to the dimensions of the camera's image
+ */
 function initCamera() {
     navigator.mediaDevices.getUserMedia({ video: true }).then(function (stream) {
         var webcamElement = document.getElementById('webcam');
