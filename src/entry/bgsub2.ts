@@ -55,6 +55,9 @@ document.getElementById('stopBtn').addEventListener('click', function (event) {
 (document.getElementById('threshold') as HTMLInputElement).addEventListener('change', function (event) {
     threshold = +this.value;
 });
+(document.getElementById('bufferSize') as HTMLInputElement).addEventListener('change', function(event) {
+    subtractor.setBufferSize(+this.value);
+});
 
 Vision.initCamera();
 

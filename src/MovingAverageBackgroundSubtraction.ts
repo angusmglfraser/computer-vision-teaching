@@ -1,68 +1,83 @@
 import { RGBImage } from './RGBImage';
+import { getImageFromVideo } from './vision';
 
 export class MovingAverageBackgroundSubtractor {
-    private buffer: Buffer<RGBImage>;
+    private buffer: DLinkedList<RGBImage>;
     private currentBackground: RGBImage;
-    private bufferSize: number;
+    private capacity: number;
 
     constructor(size: number) {
-        this.bufferSize = 1;
-        this.buffer = new Buffer<RGBImage>(size);
+        this.buffer = new DLinkedList<RGBImage>();
+        this.capacity = size;
+        this.currentBackground = null;
     }
 
-    public addFrame(image: RGBImage) {
+    public addFrame(image: RGBImage): void {
+        let size = this.buffer.getSize();
         if (this.currentBackground == null) {
-            this.currentBackground = RGBImage.clone(image);
-        }
-        let tempModel = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
-        for (let x = 0; x < tempModel.getWidth(); x++) {
-            for (let y = 0; y < tempModel.getHeight(); y++) {
-                tempModel.r[x][y] = this.currentBackground.r[x][y] * this.bufferSize;
-                tempModel.g[x][y] = this.currentBackground.g[x][y] * this.bufferSize;
-                tempModel.b[x][y] = this.currentBackground.b[x][y] * this.bufferSize;
-            }
-        }
-        if (this.bufferSize < this.buffer.getCapacity()) {
-            this.bufferSize++;
+            this.currentBackground = image;
             this.buffer.add(image);
-            for (let x = 0; x < image.getWidth(); x++) {
-                for (let y = 0; y < image.getHeight(); y++) {
-                    tempModel.r[x][y] = (tempModel.r[x][y] + image.r[x][y]) / this.bufferSize;
-                    tempModel.g[x][y] = (tempModel.g[x][y] + image.g[x][y]) / this.bufferSize;
-                    tempModel.b[x][y] = (tempModel.b[x][y] + image.b[x][y]) / this.bufferSize;
-                }
-            }
         } else {
-            this.buffer.add(image);
-            let toRemove:RGBImage = this.buffer.removeFirstNode();
-            for (let x = 0; x < image.getWidth(); x++) {
-                for (let y = 0; y < image.getHeight(); y++) {
-                    tempModel.r[x][y] = (tempModel.r[x][y] - toRemove.r[x][y] + image.r[x][y]) / this.bufferSize;
-                    tempModel.g[x][y] = (tempModel.g[x][y] - toRemove.g[x][y] + image.g[x][y]) / this.bufferSize;
-                    tempModel.b[x][y] = (tempModel.b[x][y] - toRemove.b[x][y] + image.b[x][y]) / this.bufferSize;
+            let tempModel: RGBImage;
+            if (this.buffer.getSize() < this.capacity) {
+                tempModel = RGBImage.clone(this.currentBackground);
+                for (let x = 0; x < image.getWidth(); x++) {
+                    for (let y = 0; y < image.getHeight(); y++) {
+                        tempModel.r[x][y] *= size;
+                        tempModel.g[x][y] *= size;
+                        tempModel.b[x][y] *= size;
+                        tempModel.r[x][y] += image.r[x][y];
+                        tempModel.g[x][y] += image.g[x][y];
+                        tempModel.b[x][y] += image.b[x][y];
+                    }
+                }
+            } else {
+                tempModel = RGBImage.clone(this.currentBackground);
+                let toRemove = this.buffer.removeFirstNode();
+                for (let x = 0; x < image.getWidth(); x++) {
+                    for (let y = 0; y < image.getHeight(); y++) {
+                        tempModel.r[x][y] *= size;
+                        tempModel.g[x][y] *= size;
+                        tempModel.b[x][y] *= size;
+                        tempModel.r[x][y] -= toRemove.r[x][y];
+                        tempModel.g[x][y] -= toRemove.g[x][y];
+                        tempModel.b[x][y] -= toRemove.b[x][y];
+                        tempModel.r[x][y] += image.r[x][y];
+                        tempModel.g[x][y] += image.g[x][y];
+                        tempModel.b[x][y] += image.b[x][y];
+                    }
                 }
             }
+            this.buffer.add(image);
+            for (let x = 0; x < image.getWidth(); x++) {
+                for (let y = 0; y < image.getHeight(); y++) {
+                    tempModel.r[x][y] /= this.buffer.getSize();
+                    tempModel.g[x][y] /= this.buffer.getSize();
+                    tempModel.b[x][y] /= this.buffer.getSize();
+                }
+            }
+            this.currentBackground = tempModel;
         }
-
-        this.currentBackground = tempModel;
     }
 
     public getBackgroundModel(): RGBImage {
         return this.currentBackground;
     }
 
-    public setBufferSize(num:number) {
-        if (num > this.bufferSize) {
-            this.buffer.setSize(num);
+    public setBufferSize(num: number): void {
+        if (num > this.buffer.getSize()) {
+            this.capacity = num;
         } else {
-            this.buffer.setSize(num);
+            this.capacity = num;
+            while (this.buffer.getSize() > this.capacity) {
+                this.buffer.removeFirstNode();
+            }
             this.recalculateBackgroundModel();
-            this.bufferSize = this.buffer.getSize();
         }
     }
 
-    private recalculateBackgroundModel() {
-        let iter = new BufferIterator<RGBImage>(this.buffer);
+    private recalculateBackgroundModel(): void {
+        let iter = new DLinkedListIterator<RGBImage>(this.buffer);
         let background = RGBImage.fromDimensions(this.currentBackground.getWidth(), this.currentBackground.getHeight());
         while (iter.hasNext()) {
             let frame = iter.next();
@@ -76,19 +91,19 @@ export class MovingAverageBackgroundSubtractor {
         }
         for (let x = 0; x < this.currentBackground.getWidth(); x++) {
             for (let y = 0; y < this.currentBackground.getHeight(); y++) {
-                background.r[x][y] = background.r[x][y] / this.bufferSize;
-                background.g[x][y] = background.g[x][y] / this.bufferSize;
-                background.b[x][y] = background.b[x][y] / this.bufferSize;
+                background.r[x][y] = background.r[x][y] / this.buffer.getSize();
+                background.g[x][y] = background.g[x][y] / this.buffer.getSize();
+                background.b[x][y] = background.b[x][y] / this.buffer.getSize();
             }
         }
     }
 }
 
 
-class BufferIterator<T> {
-    private buffer: Buffer<T>;
+class DLinkedListIterator<T> {
+    private buffer: DLinkedList<T>;
     private currentNode: Node<T>;
-    constructor(buf: Buffer<T>) {
+    constructor(buf: DLinkedList<T>) {
         this.currentNode = buf.getFirstNode();
     }
 
@@ -108,40 +123,32 @@ class BufferIterator<T> {
  * linked list but it can have a fixed capacity and when that capacity is reached and a new object is added, the first
  * node in the list is discarded. 
  */
-class Buffer<T> {
+class DLinkedList<T> {
     private first: Node<T>;
     private last: Node<T>;
     private size: number;
-    private capacity: number;
 
-    constructor(capacity: number) {
-        this.capacity = capacity;
+    constructor() {
         this.size = 0;
     }
 
-    public add(obj: T) {
+    public add(obj: T): void {
         if (this.size == 0) {
             this.first = new Node<T>(obj);
             this.last = this.first;
-            this.size++;
-        } else if (this.size < this.capacity) {
-            this.last.next = new Node<T>(obj);
-            this.last.next.previous = this.last;
-            this.last = this.last.next;
-            this.size++;
         } else {
             this.last.next = new Node<T>(obj);
             this.last.next.previous = this.last;
             this.last = this.last.next;
-            this.first = this.first.next;
-            this.first.previous = null;
         }
+        this.size++;
     }
 
     public removeFirstNode(): T {
         let result = this.first.data;
         this.first = this.first.next;
         this.first.previous = null;
+        this.size--;
         return result;
     }
 
@@ -149,6 +156,7 @@ class Buffer<T> {
         let result = this.last.data;
         this.last = this.last.previous;
         this.last.next = null;
+        this.size--;
         return result;
     }
 
@@ -156,23 +164,12 @@ class Buffer<T> {
         return this.first;
     }
 
+    public getLastNode(): Node<T> {
+        return this.last;
+    }
+
     public getSize(): number {
         return this.size;
-    }
-
-    public getCapacity(): number {
-        return this.capacity;
-    }
-
-    public setSize(num:number) {
-        if (this.capacity <= num) {
-            this.capacity = num;
-        } else {
-            let diff = this.capacity - num;
-            for (let i = 0; i < diff; i++) {
-
-            }
-        }
     }
 }
 
