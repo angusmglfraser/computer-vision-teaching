@@ -10,6 +10,7 @@ var RGBImage = /** @class */ (function () {
         //     RGBImage.fromDimensions();
         // or
         //     RGBImage.fromImageData();
+        this.greyscale = false;
     }
     RGBImage.getIndex = function (x, y, width, height) {
         return (width * y) + x;
@@ -115,6 +116,23 @@ var RGBImage = /** @class */ (function () {
     RGBImage.prototype.draw = function (canvas) {
         var data = this.asImageData();
         canvas.getContext('2d').putImageData(data, 0, 0);
+    };
+    RGBImage.prototype.toGreyscale = function () {
+        var result = RGBImage.fromDimensions(this.width, this.height);
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                var avg = (this.r[x][y] + this.g[x][y] + this.b[x][y]) / 3;
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = avg;
+            }
+        }
+        result.greyscale = true;
+        return result;
+    };
+    RGBImage.prototype.setGreyscale = function (val) {
+        this.greyscale = val;
+    };
+    RGBImage.prototype.isGreyscale = function () {
+        return this.greyscale;
     };
     return RGBImage;
 }());

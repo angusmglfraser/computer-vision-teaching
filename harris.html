@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Harris Corner Detector</title>
+        
+    </head>
+    <body>
+        <h2>Harris Corner Detector</h2>
+        <button id="startBtn">Start Corner Detection</button>
+        <button id="stopBtn">Stop Corner Detection</button>
+        <input type="range" min="0" max="1000" value="20" class="slider" id="threshold"></input>
+        <br />
+        <canvas id="camfeed"></canvas>
+        <canvas id="features"></canvas>
+        <canvas id="combined"></canvas>
+
+        <video id="webcam" autoplay style="display: none"></video>
+    </body>
+    <script src="js/bundles/harris.js"></script>
+</html>

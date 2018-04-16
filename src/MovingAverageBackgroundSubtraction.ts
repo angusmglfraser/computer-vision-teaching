@@ -118,11 +118,7 @@ class DLinkedListIterator<T> {
     }
 }
 
-/**
- * The data structure used for the frame buffer for moving average background subtraction. It's essentially a doubly
- * linked list but it can have a fixed capacity and when that capacity is reached and a new object is added, the first
- * node in the list is discarded. 
- */
+
 class DLinkedList<T> {
     private first: Node<T>;
     private last: Node<T>;

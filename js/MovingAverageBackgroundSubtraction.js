@@ -109,11 +109,6 @@ var DLinkedListIterator = /** @class */ (function () {
     };
     return DLinkedListIterator;
 }());
-/**
- * The data structure used for the frame buffer for moving average background subtraction. It's essentially a doubly
- * linked list but it can have a fixed capacity and when that capacity is reached and a new object is added, the first
- * node in the list is discarded.
- */
 var DLinkedList = /** @class */ (function () {
     function DLinkedList() {
         this.size = 0;

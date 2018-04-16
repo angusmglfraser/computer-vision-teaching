@@ -108,9 +108,9 @@ function edgeTracking(strengths: Array<Array<EdgeStrength>>): RGBImage {
 function computeFrame(): void {
     let inputImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
     let greyScaled = Vision.greyScale(inputImage);
-    let blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
-    let gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);
-    let gy = Vision.convolve(blurred, Vision.sobelRotated, 3, 3);
+    let blurred = Vision.greyscaleConvolve(greyScaled, Vision.gaussKernel, 5, 5);
+    let gx = Vision.greyscaleConvolve(blurred, Vision.sobelKernel, 3, 3);
+    let gy = Vision.greyscaleConvolve(blurred, Vision.sobelRotated, 3, 3);
 
     let intensity = Vision.combineConvolutions(gx, gy);
     let directions = computeEdgeAngles(gx, gy);

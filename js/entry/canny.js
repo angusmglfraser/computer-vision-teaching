@@ -118,9 +118,9 @@ function edgeTracking(strengths) {
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
     var greyScaled = Vision.greyScale(inputImage);
-    var blurred = Vision.convolve(greyScaled, Vision.gaussKernel, 5, 5);
-    var gx = Vision.convolve(blurred, Vision.sobelKernel, 3, 3);
-    var gy = Vision.convolve(blurred, Vision.sobelRotated, 3, 3);
+    var blurred = Vision.greyscaleConvolve(greyScaled, Vision.gaussKernel, 5, 5);
+    var gx = Vision.greyscaleConvolve(blurred, Vision.sobelKernel, 3, 3);
+    var gy = Vision.greyscaleConvolve(blurred, Vision.sobelRotated, 3, 3);
     var intensity = Vision.combineConvolutions(gx, gy);
     var directions = computeEdgeAngles(gx, gy);
     var thinnedEdges = edgeThinning(intensity, directions);

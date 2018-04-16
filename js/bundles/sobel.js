@@ -11,6 +11,7 @@ var RGBImage = /** @class */ (function () {
         //     RGBImage.fromDimensions();
         // or
         //     RGBImage.fromImageData();
+        this.greyscale = false;
     }
     RGBImage.getIndex = function (x, y, width, height) {
         return (width * y) + x;
@@ -117,6 +118,23 @@ var RGBImage = /** @class */ (function () {
         var data = this.asImageData();
         canvas.getContext('2d').putImageData(data, 0, 0);
     };
+    RGBImage.prototype.toGreyscale = function () {
+        var result = RGBImage.fromDimensions(this.width, this.height);
+        for (var x = 0; x < this.width; x++) {
+            for (var y = 0; y < this.height; y++) {
+                var avg = (this.r[x][y] + this.g[x][y] + this.b[x][y]) / 3;
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = avg;
+            }
+        }
+        result.greyscale = true;
+        return result;
+    };
+    RGBImage.prototype.setGreyscale = function (val) {
+        this.greyscale = val;
+    };
+    RGBImage.prototype.isGreyscale = function () {
+        return this.greyscale;
+    };
     return RGBImage;
 }());
 exports.RGBImage = RGBImage;
@@ -140,8 +158,8 @@ function computeFrame() {
         inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
     }
     inputImage = Vision.greyScale(inputImage);
-    var x = Vision.convolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.convolve(inputImage, Vision.sobelRotated, 3, 3);
+    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
+    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
     var both = Vision.combineConvolutions(x, y);
     x.draw(document.getElementById('sobelx'));
     y.draw(document.getElementById('sobely'));
@@ -178,6 +196,7 @@ exports.gaussKernel = [
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273]
 ];
+exports.gauss1d = [0.06136, 0.24477, 0.38774, 0.24477, 0.06136];
 exports.sobelKernel = [
     [1, 0, -1],
     [2, 0, -2],
@@ -243,6 +262,34 @@ function convolve(image, kernel, kernelWidth, kernelHeight) {
     return output;
 }
 exports.convolve = convolve;
+/**
+ * The same as a normal convolution except it only convolves one channel. Use this
+ * with greyscale images, as it cuts out 2/3 of the unnecessary calculations
+ * @param image the image to be convolved
+ * @param kernel the kernel
+ * @param kernelWidth the kernel's width
+ * @param kernelHeight the kernel's height
+ */
+function greyscaleConvolve(image, kernel, kernelWidth, kernelHeight) {
+    var width = image.getWidth();
+    var height = image.getHeight();
+    var output = RGBImage_1.RGBImage.fromDimensions(width, height);
+    var offsetX = Math.floor(kernelWidth / 2);
+    var offsetY = Math.floor(kernelHeight / 2);
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var acc = 0;
+            for (var kx = 0; kx < kernelWidth; kx++) {
+                for (var ky = 0; ky < kernelHeight; ky++) {
+                    acc += kernel[kx][ky] * image.r[Math.abs(x + offsetX - kx) % width][Math.abs(y + offsetY - ky) % height];
+                }
+            }
+            output.r[x][y] = output.g[x][y] = output.b[x][y] = acc;
+        }
+    }
+    return output;
+}
+exports.greyscaleConvolve = greyscaleConvolve;
 /**
  * This function is to be used when convolving an image with a symmetrical kernel. The kernel passed
  * to this function has to be 1-dimensional. The image will then be convolved with the kernel in the
@@ -354,5 +401,71 @@ function initCamera() {
     });
 }
 exports.initCamera = initCamera;
+/**
+ * Performs a simple background subtraction with two images and returns the foreground
+ * @param image the image being analyzed
+ * @param backgroundModel the background frame
+ * @param threshold the difference threshold
+ */
+function getForeground(image, backgroundModel, threshold) {
+    backgroundModel = greyScale(backgroundModel);
+    var imageGreyscale = greyScale(image);
+    var foreground = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
+            if (diff > threshold) {
+                foreground.r[x][y] = image.r[x][y];
+                foreground.g[x][y] = image.g[x][y];
+                foreground.b[x][y] = image.b[x][y];
+            }
+        }
+    }
+    return foreground;
+}
+exports.getForeground = getForeground;
+/**
+ * Returns the background pixels from a background subtraction
+ * @param image
+ * @param backgroundModel
+ * @param threshold
+ */
+function getBackground(image, backgroundModel, threshold) {
+    backgroundModel = greyScale(backgroundModel);
+    var imageGreyscale = greyScale(image);
+    var background = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
+            if (diff < threshold) {
+                background.r[x][y] = image.r[x][y];
+                background.g[x][y] = image.g[x][y];
+                background.b[x][y] = image.b[x][y];
+            }
+        }
+    }
+    return background;
+}
+exports.getBackground = getBackground;
+/**
+ * Returns the difference mask of two images
+ * @param background the background model
+ * @param image the current image
+ */
+function imageDiff(background, image) {
+    var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (var x = 0; x < image.getWidth(); x++) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            var rdiff = Math.abs(image.r[x][y] - background.r[x][y]);
+            var gdiff = Math.abs(image.g[x][y] - background.g[x][y]);
+            var bdiff = Math.abs(image.b[x][y] - background.b[x][y]);
+            result.r[x][y] = rdiff;
+            result.g[x][y] = gdiff;
+            result.b[x][y] = bdiff;
+        }
+    }
+    return result;
+}
+exports.imageDiff = imageDiff;
 
 },{"./RGBImage":1}]},{},[2]);

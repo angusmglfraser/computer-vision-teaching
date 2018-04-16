@@ -8,23 +8,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var Vision = __importStar(require("../vision"));
-var blurring = false;
+var HarrisCornerDetector_1 = require("../HarrisCornerDetector");
 var animating = false;
+var threshold = 80;
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
-    if (blurring) {
-        inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
-    }
-    inputImage = Vision.greyScale(inputImage);
-    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
-    var both = Vision.combineConvolutions(x, y);
-    x.draw(document.getElementById('sobelx'));
-    y.draw(document.getElementById('sobely'));
-    both.draw(document.getElementById('sobelboth'));
-    if (animating) {
-        requestAnimationFrame(computeFrame);
-    }
+    var corners = HarrisCornerDetector_1.getHarrisCorners(inputImage, threshold);
+    corners.draw(document.getElementById('features'));
+    // if (animating) {
+    //     requestAnimationFrame(computeFrame);
+    // }
 }
 document.getElementById('startBtn').addEventListener('click', function (event) {
     animating = true;
@@ -33,12 +26,7 @@ document.getElementById('startBtn').addEventListener('click', function (event) {
 document.getElementById('stopBtn').addEventListener('click', function (event) {
     animating = false;
 });
-document.getElementById('gaussianToggle').addEventListener('change', function (event) {
-    if (this.checked) {
-        blurring = true;
-    }
-    else {
-        blurring = false;
-    }
+document.getElementById('threshold').addEventListener('change', function (event) {
+    threshold = +this.value;
 });
 Vision.initCamera();

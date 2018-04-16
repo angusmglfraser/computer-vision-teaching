@@ -8,6 +8,8 @@ export const gaussKernel: Array<Array<number>> = [
 	[1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273]
 ];
 
+export const gauss1d = [0.06136, 0.24477, 0.38774, 0.24477, 0.06136];
+
 export const sobelKernel = [
 	[1, 0, -1],
 	[2, 0, -2],
@@ -73,6 +75,40 @@ export function convolve(image: RGBImage, kernel: Array<Array<number>>, kernelWi
 			output.r[x][y] = raccumulator;
 			output.g[x][y] = gaccumulator;
 			output.b[x][y] = baccumulator;
+		}
+	}
+
+	return output;
+}
+
+/**
+ * The same as a normal convolution except it only convolves one channel. Use this 
+ * with greyscale images, as it cuts out 2/3 of the unnecessary calculations
+ * @param image the image to be convolved
+ * @param kernel the kernel
+ * @param kernelWidth the kernel's width
+ * @param kernelHeight the kernel's height
+ */
+export function greyscaleConvolve(image: RGBImage, kernel: Array<Array<number>>, kernelWidth: number, kernelHeight: number): RGBImage {
+	let width = image.getWidth();
+	let height = image.getHeight();
+
+	let output = RGBImage.fromDimensions(width, height);
+
+	let offsetX = Math.floor(kernelWidth / 2);
+	let offsetY = Math.floor(kernelHeight / 2);
+
+	for (let x = 0; x < image.getWidth(); x++) {
+		for (let y = 0; y < image.getHeight(); y++) {
+			let acc = 0;
+
+			for (let kx = 0; kx < kernelWidth; kx++) {
+				for (let ky = 0; ky < kernelHeight; ky++) {
+					acc += kernel[kx][ky] * image.r[Math.abs(x + offsetX - kx) % width][Math.abs(y + offsetY - ky) % height];
+				}
+			}
+
+			output.r[x][y] = output.g[x][y] = output.b[x][y] = acc;
 		}
 	}
 
@@ -199,4 +235,76 @@ export function initCamera(): void {
 			alert(err);
 		}
 	);
+}
+
+/**
+ * Performs a simple background subtraction with two images and returns the foreground
+ * @param image the image being analyzed
+ * @param backgroundModel the background frame
+ * @param threshold the difference threshold
+ */
+export function getForeground(image: RGBImage, backgroundModel: RGBImage, threshold: number): RGBImage {
+    backgroundModel = greyScale(backgroundModel);
+    let imageGreyscale = greyScale(image);
+    let foreground = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+
+    for (let x = 0; x < image.getWidth(); x++) {
+        for (let y = 0; y < image.getHeight(); y++) {
+            let diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
+            if (diff > threshold) {
+                foreground.r[x][y] = image.r[x][y];
+                foreground.g[x][y] = image.g[x][y];
+                foreground.b[x][y] = image.b[x][y];
+            }
+        }
+    }
+
+    return foreground;
+}
+
+/**
+ * Returns the background pixels from a background subtraction
+ * @param image
+ * @param backgroundModel 
+ * @param threshold 
+ */
+export function getBackground(image: RGBImage, backgroundModel: RGBImage, threshold: number): RGBImage {
+    backgroundModel = greyScale(backgroundModel);
+    let imageGreyscale = greyScale(image);
+    let background = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+
+    for (let x = 0; x < image.getWidth(); x++) {
+        for (let y = 0; y < image.getHeight(); y++) {
+            let diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
+            if (diff < threshold) {
+                background.r[x][y] = image.r[x][y];
+                background.g[x][y] = image.g[x][y];
+                background.b[x][y] = image.b[x][y];
+            }
+        }
+    }
+    return background;
+}
+
+
+/**
+ * Returns the difference mask of two images
+ * @param background the background model
+ * @param image the current image
+ */
+export function imageDiff(background: RGBImage, image: RGBImage): RGBImage {
+    let result = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    
+    for (let x = 0; x < image.getWidth(); x++) {
+        for (let y = 0; y < image.getHeight(); y++) {
+            let rdiff = Math.abs(image.r[x][y] - background.r[x][y]);
+            let gdiff = Math.abs(image.g[x][y] - background.g[x][y]);
+            let bdiff = Math.abs(image.b[x][y] - background.b[x][y]);
+            result.r[x][y] = rdiff;
+            result.g[x][y] = gdiff;
+            result.b[x][y] = bdiff;
+        }
+    }
+
+    return result;
 }

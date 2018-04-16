@@ -1,5 +1,62 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+var RGBImage_1 = require("./RGBImage");
+var Vision = __importStar(require("./vision"));
+function getHarrisCorners(image, threshold) {
+    image = Vision.greyScale(image);
+    var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    // Get x and y gradients
+    var x_gradients = Vision.greyscaleConvolve(image, Vision.sobelKernel, 3, 3);
+    var y_gradients = Vision.greyscaleConvolve(image, Vision.sobelRotated, 3, 3);
+    for (var x = 1; x < image.getWidth() - 1; x++) {
+        for (var y = 1; y < image.getHeight() - 1; y++) {
+            // calculate image gradients over window
+            var xacc = 0;
+            var yacc = 0;
+            for (var i = x - 1; i <= x + 1; i++) {
+                for (var j = y - 1; j <= y + 1; j++) {
+                    xacc += x_gradients.r[i][j];
+                    yacc += y_gradients.r[i][j];
+                }
+            }
+            //calculate "cornerness" score using formula: score = det(m) - k * trace(m)^2
+            var matrix = [xacc * xacc, xacc * yacc, xacc * yacc, yacc * yacc];
+            var det = determinant(matrix);
+            var trace = matrix[1] + matrix[2];
+            var score = det - (0.04 * trace * trace);
+            if (score > 0) {
+                console.log(score);
+            }
+            // thresholding
+            if (score > threshold) {
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = 255;
+            }
+            else {
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+            }
+        }
+    }
+    return result;
+}
+exports.getHarrisCorners = getHarrisCorners;
+/**
+ * Returns the determinant of a 2x2 matrix (input as a 1d matrix)
+ * @param matrix
+ */
+function determinant(matrix) {
+    return (matrix[0] * matrix[3]) - (matrix[1] * matrix[2]);
+}
+
+},{"./RGBImage":2,"./vision":4}],2:[function(require,module,exports){
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage = /** @class */ (function () {
     function RGBImage() {
@@ -139,7 +196,7 @@ var RGBImage = /** @class */ (function () {
 }());
 exports.RGBImage = RGBImage;
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -150,44 +207,30 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var Vision = __importStar(require("../vision"));
-var bg;
+var HarrisCornerDetector_1 = require("../HarrisCornerDetector");
 var animating = false;
 var threshold = 80;
-function getBackgroundFrame() {
-    var img = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('backgroundModel'));
-    bg = img;
-}
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
-    var outputImage = Vision.imageDiff(inputImage, bg);
-    outputImage.draw(document.getElementById('diff'));
-    outputImage = Vision.getBackground(inputImage, bg, threshold);
-    outputImage.draw(document.getElementById('background'));
-    outputImage = Vision.getForeground(inputImage, bg, threshold);
-    outputImage.draw(document.getElementById('foreground'));
-    if (animating) {
-        requestAnimationFrame(computeFrame);
-    }
+    var corners = HarrisCornerDetector_1.getHarrisCorners(inputImage, threshold);
+    corners.draw(document.getElementById('features'));
+    // if (animating) {
+    //     requestAnimationFrame(computeFrame);
+    // }
 }
 document.getElementById('startBtn').addEventListener('click', function (event) {
     animating = true;
-    if (bg == undefined) {
-        getBackgroundFrame();
-    }
-    requestAnimationFrame(computeFrame);
+    computeFrame();
 });
 document.getElementById('stopBtn').addEventListener('click', function (event) {
     animating = false;
-});
-document.getElementById('getBackground').addEventListener('click', function (event) {
-    getBackgroundFrame();
 });
 document.getElementById('threshold').addEventListener('change', function (event) {
     threshold = +this.value;
 });
 Vision.initCamera();
 
-},{"../vision":3}],3:[function(require,module,exports){
+},{"../HarrisCornerDetector":1,"../vision":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
@@ -470,4 +513,4 @@ function imageDiff(background, image) {
 }
 exports.imageDiff = imageDiff;
 
-},{"./RGBImage":1}]},{},[2]);
+},{"./RGBImage":2}]},{},[3]);
