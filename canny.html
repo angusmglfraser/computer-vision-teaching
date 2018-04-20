@@ -4,27 +4,88 @@
 <head>
 	<meta charset="utf-8">
 	<title>Canny Edge Detection</title>
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
+	 crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+	 crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
+	 crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
+	 crossorigin="anonymous"></script>
+
 </head>
 
 <body>
-	<h1>Canny Edge Detection</h1>
+	<div class="">
+		<h1>Canny Edge Detection</h1>
+		<p>The Canny edge detector is a slightly more advanced approach to edge detection. It employs a few different techniques to
+			try and minimise the level of noise in an image. The steps are as follows: </p>
+		<div>
+			<div>
+				<h2>Blurring</h2>
+				<p>The first step in the canny edge detector is to blur the image. This helps to smooth out noise and small variations in
+					textured areas, while still preserving strong edges. This example uses a gaussian blur, but other implementations of
+					this edge detector often use other blurring techniques such as mean blurs, or box blurs. </p>
+			</div>
+			<div>
+				<h2>Basic Edge Detection</h2>
+				<p>The second step is to perform some basic edge detection, usually using the Sobel operator. The edge gradients in the
+					x and y directions are stored and used in later calculations</p>
+			</div>
+			<div>
+				<h2>Computing Edge Angles & Edge Thinning</h2>
+				<p>In this step, only local maxima in edge intensity are preserved. This serves to reduce thicker edges down to the point
+					at which the change in intensity is greatest. To do this, first the edge angles are computed, and then rounded to the
+					nearest increment of 45 degrees. Since the two convolutions with the sobel operator give edge intensity in both the
+					x and y directions, the angle of an edge at any specific pixel can be calculated using the following formula:</p>
 
-	<button id="startBtn">Start Edge Detection</button>
-	<button id="stopBtn">Stop Edge Detection</button>
-	<br />
-	<input type="range" id="lowerThreshold" min="0" value="10" max="255" step="1" />
-	<input type="range" id="upperThreshold" min="0" value="50" max="255" step="1" />
+				\(\theta = atan2(G_x, G_y) \)
 
-	<br />
+				<p>Where \( G \) is the intensity of the edge in the x or y direction.</p>
 
-	<canvas id="camfeed"></canvas>
-	<canvas id="cannyoutput"></canvas>
+				<p>This value is then assigned a value of 0, 45 or 90 degrees. 0 if the line is closest to the vertical axis, 90 if it is
+					closest to the horizontal axis and 45 if it is closest to one of the diagonals. There is no distinction made between
+					the two diagonals in this case because the sobel operator gives the same response for edges on one diagonal as it does
+					on the other. </p>
 
-	<canvas id="zoomwindow"></canvas>
+				<p>To finish edge thinning, each pixel that is the local maximum in it's assigned direction is preserved for the next step,
+					and the rest are discarded.
+				</p>
+			</div>
+			<div>
+				<h2>Thresholding</h2>
+				<p>The Canny edge detector uses two thresholds to designate each pixel as a strong edge, a weak edge, or a non-edge. All
+					values above the upper threshold are assigned as strong edges. Of the remaining values, those above the lower threshold
+					are assigned as weak edges, and the rest of the values (those below the lower threshold) are non-edges, and are discarded.
+					The pixels marked as weak edges will become strong edges or will be discarded in the next step. </p>
+			</div>
+			<div>
+				<h2>Hysteresis</h2>
+				<p>In this step, weak edges are either included in the output or discarded. As mentioned before, strong edges are automatically
+					included. Each weak edge is included in the output if it has at least one neighbouring pixel that is a strong edge.
+					</p>
+			</div>
+		</div>
+
+		
+		<button id="startBtn">Start Edge Detection</button>
+		<button id="stopBtn">Stop Edge Detection</button>
+		<br />
+		<input type="range" id="lowerThreshold" min="0" value="10" max="255" step="1" />
+		<input type="range" id="upperThreshold" min="0" value="50" max="255" step="1" />
+
+		<br />
+
+		<canvas id="camfeed"></canvas>
+		<canvas id="cannyoutput"></canvas>
+
+		<canvas id="zoomwindow"></canvas>
 
 
-	<video id="webcam" autoplay style="display: none"></video>
-	<script src="js/bundles/canny.js">
-	</script>
-
+		<video id="webcam" autoplay style="display: none"></video>
+		<script src="js/bundles/canny.js">
+		</script>
+	</div>
+</body>
 </html>

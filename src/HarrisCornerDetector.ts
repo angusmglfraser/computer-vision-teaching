@@ -2,8 +2,8 @@ import { RGBImage } from './RGBImage';
 import * as Vision from './vision';
 
 
-export function getHarrisCorners(image: RGBImage, threshold: number):RGBImage {
-    image = Vision.greyScale(image);
+export function getHarrisCorners(image: RGBImage, threshold: number): RGBImage {
+    image = image.greyScale();
     let result = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
 
     // Get x and y gradients
@@ -15,21 +15,23 @@ export function getHarrisCorners(image: RGBImage, threshold: number):RGBImage {
             // calculate image gradients over window
             let xacc = 0;
             let yacc = 0;
-            for (let i = x -1; i <= x + 1; i++) {
+            for (let i = x - 1; i <= x + 1; i++) {
                 for (let j = y - 1; j <= y + 1; j++) {
                     xacc += x_gradients.r[i][j];
                     yacc += y_gradients.r[i][j];
                 }
             }
-
+            xacc /= 9;
+            yacc /= 9;
             //calculate "cornerness" score using formula: score = det(m) - k * trace(m)^2
-            let matrix = [xacc * xacc, xacc * yacc, xacc * yacc, yacc * yacc];
-            let det = determinant(matrix);
-            let trace = matrix[1] + matrix[2];
-            let score = det - (0.04 * trace * trace);
-            if (score > 0) {
-                console.log(score);
-            }
+            let a = xacc * xacc;
+            let b = yacc * yacc;
+            let c = xacc * yacc;
+            let det = (a * b) - (c * c);
+            let trace = a + b;
+            let score = det - (0.4 * trace * trace);
+            
+            console.log(score);
 
             // thresholding
             if (score > threshold) {
@@ -42,12 +44,4 @@ export function getHarrisCorners(image: RGBImage, threshold: number):RGBImage {
 
     return result;
 
-}
-
-/**
- * Returns the determinant of a 2x2 matrix (input as a 1d matrix)
- * @param matrix 
- */
-function determinant(matrix:Array<number>):number {
-    return (matrix[0] * matrix[3]) - (matrix[1] * matrix[2])
 }

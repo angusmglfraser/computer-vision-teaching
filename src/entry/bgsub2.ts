@@ -9,8 +9,8 @@ let bufferSize = 20;
 let subtractor: MovingAverageBackgroundSubtractor = new MovingAverageBackgroundSubtractor(bufferSize);
 
 function getForeground(image: RGBImage, backgroundModel: RGBImage, thresh: number) {
-    backgroundModel = Vision.greyScale(backgroundModel);
-    let imageGreyscale = Vision.greyScale(image);
+    backgroundModel = backgroundModel.greyScale();
+    let imageGreyscale = image.greyScale();
     let foreground = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
 
     for (let x = 0; x < image.getWidth(); x++) {

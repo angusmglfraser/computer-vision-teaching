@@ -21,6 +21,12 @@ export const sobelRotated = [
 	[-1, -2, -1]
 ];
 
+enum EdgeStrength {
+    NO_EDGE,
+    WEAK_EDGE,
+    STRONG_EDGE
+}
+
 /**
  * Returns the current frame on a canvas
  * @param canvas 
@@ -166,25 +172,6 @@ export function convolve1d(image: RGBImage, kernel: Array<number>): RGBImage {
 }
 
 /**
- * Returns a greyscaled version of an image
- * @param image 
- */
-export function greyScale(image: RGBImage): RGBImage {
-	let width = image.getWidth();
-	let height = image.getHeight();
-	let result = RGBImage.fromDimensions(width, height);
-
-	for (var x = 0; x < width; x++) {
-		for (var y = 0; y < height; y++) {
-			let avg = Math.floor((image.r[x][y] + image.g[x][y] + image.b[x][y]) / 3);
-			result.r[x][y] = result.g[x][y] = result.b[x][y] = avg;
-		}
-	}
-
-	return result;
-}
-
-/**
  * Performs a pythagorean combination of two images. Each pixel in the output image
  * is equivalent to the sum of the squares of the corresponding pixel in the two
  * input images.
@@ -244,8 +231,8 @@ export function initCamera(): void {
  * @param threshold the difference threshold
  */
 export function getForeground(image: RGBImage, backgroundModel: RGBImage, threshold: number): RGBImage {
-    backgroundModel = greyScale(backgroundModel);
-    let imageGreyscale = greyScale(image);
+    backgroundModel = backgroundModel.greyScale();
+    let imageGreyscale = image.greyScale();
     let foreground = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
 
     for (let x = 0; x < image.getWidth(); x++) {
@@ -269,8 +256,8 @@ export function getForeground(image: RGBImage, backgroundModel: RGBImage, thresh
  * @param threshold 
  */
 export function getBackground(image: RGBImage, backgroundModel: RGBImage, threshold: number): RGBImage {
-    backgroundModel = greyScale(backgroundModel);
-    let imageGreyscale = greyScale(image);
+    backgroundModel = backgroundModel.greyScale();
+    let imageGreyscale = image.greyScale();
     let background = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
 
     for (let x = 0; x < image.getWidth(); x++) {
@@ -307,4 +294,112 @@ export function imageDiff(background: RGBImage, image: RGBImage): RGBImage {
     }
 
     return result;
+}
+
+function computeEdgeAngles(image1: RGBImage, image2: RGBImage): Array<Array<number>> {
+    let output = new Array<Array<number>>(image1.getWidth());
+    for (let x = 0; x < image1.getWidth(); x++) {
+        output[x] = new Array<number>(image1.getHeight());
+        for (let y = 0; y < image1.getHeight(); y++) {
+            let angle = Math.atan2(image1.r[x][y], image2.r[x][y]) * 180 / Math.PI;
+            output[x][y] = angle;
+        }
+    }
+    return output;
+}
+
+function edgeThinning(image: RGBImage, gradients: Array<Array<number>>): RGBImage {
+    let result = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    for (let x = 0; x < image.getWidth(); x++) {
+        for (let y = 0; y < image.getHeight(); y++) {
+            let angle = gradients[x][y];
+            if (angle < 22.5) {
+                if (image.r[x][y] == Math.max(image.r[(x + 1) % image.getWidth()][y], image.r[Math.abs(x - 1)][y], image.r[x][y])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
+                } else {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+                }
+            } else if (angle < 67.5) {
+                if (image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][(y + 1) % image.getHeight()], image.r[Math.abs(x - 1)][Math.abs(y - 1)])
+                    || image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][Math.abs(y - 1)], image.r[Math.abs(x - 1)][(y + 1) % image.getHeight()])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
+                } else {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+                }
+            } else {
+                if (image.r[x][y] == Math.max(image.r[x][(y + 1) % image.getHeight()], image.r[x][Math.abs(y - 1)], image.r[x][y])) {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
+                } else {
+                    result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+function thresholding(image: RGBImage, threshold1: number, threshold2: number): Array<Array<EdgeStrength>> {
+    let strengths = new Array<Array<EdgeStrength>>(image.getWidth());
+    let upper = Math.max(threshold1, threshold2);
+    let lower = Math.min(threshold1, threshold2);
+    for (let x = 0; x < image.getWidth(); x++) {
+        strengths[x] = new Array<EdgeStrength>(image.getHeight());
+        for (let y = 0; y < image.getHeight(); y++) {
+            if (image.r[x][y] > upper) {
+                strengths[x][y] = EdgeStrength.STRONG_EDGE;
+            } else if (image.r[x][y] > lower) {
+                strengths[x][y] = EdgeStrength.WEAK_EDGE;
+            } else {
+                strengths[x][y] = 0;
+            }
+        }
+    }
+    return strengths;
+}
+
+function hysteresis(strengths: Array<Array<EdgeStrength>>): RGBImage {
+    let width = strengths.length;
+    let height = strengths[0].length;
+    let output = RGBImage.fromDimensions(width, height);
+
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+
+            if (strengths[x][y] === EdgeStrength.STRONG_EDGE) {
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = 255;
+            } else if (strengths[x][y] === EdgeStrength.WEAK_EDGE) {
+                // blob analysis
+                let isEdge = false;
+                let val = 0;
+                for (let blobx = x - 1; blobx <= x + 1; blobx++) {
+                    for (let bloby = y - 1; bloby <= y + 1; bloby++) {
+                        if (strengths[Math.abs(blobx) % width][Math.abs(bloby) % height] === EdgeStrength.STRONG_EDGE) {
+                            isEdge = true;
+                            val = 255;
+                            break;
+                        }
+                    }
+                    if (isEdge) {
+                        break;
+                    }
+                }
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = val;
+            } else {
+                output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
+            }
+        }
+    }
+    return output;
+}
+
+export function getCannyEdges(image: RGBImage, threshold1:number, threshold2: number) {
+    image=image.greyScale();
+    let blurred = convolve1d(image, gauss1d);
+    let gx = greyscaleConvolve(blurred, sobelKernel, 3, 3);
+    let gy = greyscaleConvolve(blurred, sobelRotated, 3, 3);
+    let intensity = combineConvolutions(gx, gy);
+    let directions = computeEdgeAngles(gx, gy);
+    let thinnedEdges = edgeThinning(intensity, directions);
+    let thresholded = thresholding(thinnedEdges, threshold1, threshold2);
+    return hysteresis(thresholded);
 }

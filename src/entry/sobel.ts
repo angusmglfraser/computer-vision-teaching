@@ -10,7 +10,7 @@ function computeFrame(): void {
 	if (blurring) {
 		inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
 	}
-	inputImage = Vision.greyScale(inputImage);
+	inputImage = inputImage.greyScale();
 	let x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
 	let y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
 	let both = Vision.combineConvolutions(x, y);

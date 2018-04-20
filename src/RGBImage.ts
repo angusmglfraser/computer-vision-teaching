@@ -134,4 +134,18 @@ export class RGBImage {
 		let data = this.asImageData();
 		canvas.getContext('2d').putImageData(data,0,0);
 	}
+
+	/**
+	 * Returns a greyscaled copy of this image.
+	 */
+	public greyScale(): RGBImage {
+		let result = RGBImage.fromDimensions(this.width, this.height);
+		for (let x = 0; x < result.width; x++) {
+			for ( let y = 0; y < result.height; y++) {
+				let avg = (this.r[x][y] + this.g[x][y] + this.b[x][y]) / 3;
+				result.r[x][y] = result.g[x][y] = result.b[x][y] = avg;
+			}
+		}
+		return result;
+	}
 }

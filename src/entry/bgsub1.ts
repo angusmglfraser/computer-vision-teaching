@@ -11,15 +11,11 @@ function getBackgroundFrame() {
 }
 
 
-
-
 function computeFrame() {
     let inputImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
 
     let outputImage = Vision.imageDiff(inputImage, bg);
     outputImage.draw(document.getElementById('diff') as HTMLCanvasElement);
-    outputImage = Vision.getBackground(inputImage, bg, threshold);
-    outputImage.draw(document.getElementById('background') as HTMLCanvasElement);
     outputImage = Vision.getForeground(inputImage, bg, threshold);
     outputImage.draw(document.getElementById('foreground') as HTMLCanvasElement);
 

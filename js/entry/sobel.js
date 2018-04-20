@@ -15,7 +15,7 @@ function computeFrame() {
     if (blurring) {
         inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
     }
-    inputImage = Vision.greyScale(inputImage);
+    inputImage = inputImage.greyScale();
     var x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
     var y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
     var both = Vision.combineConvolutions(x, y);

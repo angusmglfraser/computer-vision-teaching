@@ -16,8 +16,8 @@ var threshold = 80;
 var bufferSize = 20;
 var subtractor = new MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor(bufferSize);
 function getForeground(image, backgroundModel, thresh) {
-    backgroundModel = Vision.greyScale(backgroundModel);
-    var imageGreyscale = Vision.greyScale(image);
+    backgroundModel = backgroundModel.greyScale();
+    var imageGreyscale = image.greyScale();
     var foreground = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     for (var x = 0; x < image.getWidth(); x++) {
         for (var y = 0; y < image.getHeight(); y++) {

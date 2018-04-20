@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
 var Vision = __importStar(require("./vision"));
 function getHarrisCorners(image, threshold) {
-    image = Vision.greyScale(image);
+    image = image.greyScale();
     var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     // Get x and y gradients
     var x_gradients = Vision.greyscaleConvolve(image, Vision.sobelKernel, 3, 3);
@@ -26,14 +26,16 @@ function getHarrisCorners(image, threshold) {
                     yacc += y_gradients.r[i][j];
                 }
             }
+            xacc /= 9;
+            yacc /= 9;
             //calculate "cornerness" score using formula: score = det(m) - k * trace(m)^2
-            var matrix = [xacc * xacc, xacc * yacc, xacc * yacc, yacc * yacc];
-            var det = determinant(matrix);
-            var trace = matrix[1] + matrix[2];
-            var score = det - (0.04 * trace * trace);
-            if (score > 0) {
-                console.log(score);
-            }
+            var a = xacc * xacc;
+            var b = yacc * yacc;
+            var c = xacc * yacc;
+            var det = (a * b) - (c * c);
+            var trace = a + b;
+            var score = det - (0.4 * trace * trace);
+            console.log(score);
             // thresholding
             if (score > threshold) {
                 result.r[x][y] = result.g[x][y] = result.b[x][y] = 255;
@@ -46,10 +48,3 @@ function getHarrisCorners(image, threshold) {
     return result;
 }
 exports.getHarrisCorners = getHarrisCorners;
-/**
- * Returns the determinant of a 2x2 matrix (input as a 1d matrix)
- * @param matrix
- */
-function determinant(matrix) {
-    return (matrix[0] * matrix[3]) - (matrix[1] * matrix[2]);
-}
