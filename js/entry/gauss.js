@@ -39,15 +39,16 @@ function expandKernel(kernel) {
 }
 function writeMatrix(matrix) {
     var matrixElement = document.getElementById('matrix');
-    var resultString = "";
+    var resultString = "\\( \\begin{bmatrix} ";
     for (var y = 0; y < matrix.length; y++) {
-        resultString += "<tr>";
-        for (var x = 0; x < matrix[y].length; x++) {
-            resultString += "<td>" + matrix[x][y] + "</td>";
+        for (var x = 0; x < matrix[y].length - 1; x++) {
+            resultString += matrix[x][y] + " & ";
         }
-        resultString += "</tr>";
+        resultString += matrix[matrix.length - 1][y] + " \\\\ ";
     }
+    resultString += "\\end{bmatrix} \\)";
     matrixElement.innerHTML = resultString;
+    MathJax.Hub.Typeset();
 }
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
@@ -85,3 +86,6 @@ document.getElementById('stdDev').addEventListener('change', function (event) {
     writeMatrix(displayKernel);
 });
 Vision.initCamera();
+convolutionKernel = computeKernel(kernelSize, stdDev);
+displayKernel = expandKernel(convolutionKernel);
+writeMatrix(displayKernel);

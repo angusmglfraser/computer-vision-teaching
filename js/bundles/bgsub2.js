@@ -314,35 +314,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var MovingAverageBackgroundSubtraction_1 = require("../MovingAverageBackgroundSubtraction");
-var RGBImage_1 = require("../RGBImage");
 var Vision = __importStar(require("../vision"));
 var bg;
 var animating = false;
 var threshold = 80;
 var bufferSize = 20;
 var subtractor = new MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor(bufferSize);
-function getForeground(image, backgroundModel, thresh) {
-    backgroundModel = backgroundModel.greyScale();
-    var imageGreyscale = image.greyScale();
-    var foreground = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
-    for (var x = 0; x < image.getWidth(); x++) {
-        for (var y = 0; y < image.getHeight(); y++) {
-            var diff = Math.abs(imageGreyscale.r[x][y] - backgroundModel.r[x][y]);
-            if (diff > thresh) {
-                foreground.r[x][y] = image.r[x][y];
-                foreground.g[x][y] = image.g[x][y];
-                foreground.b[x][y] = image.b[x][y];
-            }
-        }
-    }
-    return foreground;
-}
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var inputFrame = Vision.getImageFromVideo(videoElement, document.getElementById('camfeed'));
     subtractor.addFrame(inputFrame);
     bg = subtractor.getBackgroundModel();
-    var foreground = getForeground(inputFrame, bg, threshold);
+    var foreground = Vision.getForeground(inputFrame, bg, threshold);
     foreground.draw(document.getElementById('foreground'));
     bg.draw(document.getElementById('backgroundModel'));
     if (animating) {
@@ -364,7 +347,7 @@ document.getElementById('bufferSize').addEventListener('change', function (event
 });
 Vision.initCamera();
 
-},{"../MovingAverageBackgroundSubtraction":1,"../RGBImage":2,"../vision":4}],4:[function(require,module,exports){
+},{"../MovingAverageBackgroundSubtraction":1,"../vision":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
@@ -636,6 +619,11 @@ function imageDiff(background, image) {
     return result;
 }
 exports.imageDiff = imageDiff;
+/**
+ * Calculates the angles of edges in degrees, based on edge gradients in the x and y directions
+ * @param image1 The first image with gradients in the x direction
+ * @param image2 The second image with gradients in the y direction
+ */
 function computeEdgeAngles(image1, image2) {
     var output = new Array(image1.getWidth());
     for (var x = 0; x < image1.getWidth(); x++) {
@@ -647,11 +635,16 @@ function computeEdgeAngles(image1, image2) {
     }
     return output;
 }
-function edgeThinning(image, gradients) {
+/**
+ * This function preserves local maxima and discards all other pixels to ensure edges are no thicker than one pixel
+ * @param image The edge gradients
+ * @param angles The edge angles
+ */
+function edgeThinning(image, angles) {
     var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     for (var x = 0; x < image.getWidth(); x++) {
         for (var y = 0; y < image.getHeight(); y++) {
-            var angle = gradients[x][y];
+            var angle = angles[x][y];
             if (angle < 22.5) {
                 if (image.r[x][y] == Math.max(image.r[(x + 1) % image.getWidth()][y], image.r[Math.abs(x - 1)][y], image.r[x][y])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
@@ -681,7 +674,13 @@ function edgeThinning(image, gradients) {
     }
     return result;
 }
-function thresholding(image, threshold1, threshold2) {
+/**
+ * Performs dual thresholding for canny edge detection. All pixels above the upper threshold are preserved, all remaining pixels above the lower threshold are marked as weak edges, and all other pixels are discarded.
+ * @param image
+ * @param threshold1
+ * @param threshold2
+ */
+function dualThresholding(image, threshold1, threshold2) {
     var strengths = new Array(image.getWidth());
     var upper = Math.max(threshold1, threshold2);
     var lower = Math.min(threshold1, threshold2);
@@ -701,6 +700,10 @@ function thresholding(image, threshold1, threshold2) {
     }
     return strengths;
 }
+/**
+ * Performs hysteresis for canny edge detection. All pixels that are marked as strong edges are automatically included in the output, all weak edges are preserved in the output if and only if at least one of their 8 immediately neighbouring pixels is a strong edge
+ * @param strengths
+ */
 function hysteresis(strengths) {
     var width = strengths.length;
     var height = strengths[0].length;
@@ -735,6 +738,12 @@ function hysteresis(strengths) {
     }
     return output;
 }
+/**
+ * Performs canny edge detection on an image.
+ * @param image the image
+ * @param threshold1 the first threshold
+ * @param threshold2 the second threshold
+ */
 function getCannyEdges(image, threshold1, threshold2) {
     image = image.greyScale();
     var blurred = convolve1d(image, exports.gauss1d);
@@ -743,7 +752,7 @@ function getCannyEdges(image, threshold1, threshold2) {
     var intensity = combineConvolutions(gx, gy);
     var directions = computeEdgeAngles(gx, gy);
     var thinnedEdges = edgeThinning(intensity, directions);
-    var thresholded = thresholding(thinnedEdges, threshold1, threshold2);
+    var thresholded = dualThresholding(thinnedEdges, threshold1, threshold2);
     return hysteresis(thresholded);
 }
 exports.getCannyEdges = getCannyEdges;

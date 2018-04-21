@@ -1,4 +1,5 @@
 import * as Vision from '../vision';
+declare var MathJax:any;
 
 let animating = false;
 let stdDev: number = +(document.getElementById('stdDev') as HTMLInputElement).value;
@@ -37,16 +38,16 @@ function expandKernel(kernel: Array<number>): Array<Array<number>> {
 
 function writeMatrix(matrix: Array<Array<number>>): void {
     let matrixElement = document.getElementById('matrix');
-    let resultString = "";
+    let resultString = "\\( \\begin{bmatrix} ";
     for (let y = 0; y < matrix.length; y++) {
-        resultString += "<tr>"
-        for (let x = 0; x < matrix[y].length; x++) {
-            resultString += "<td>" + matrix[x][y] + "</td>";
+        for (let x = 0; x < matrix[y].length - 1; x++) {
+            resultString += matrix[x][y] + " & ";
         }
-        resultString += "</tr>"
+        resultString += matrix[matrix.length - 1][y] + " \\\\ ";
     }
-
+    resultString += "\\end{bmatrix} \\)";
     matrixElement.innerHTML = resultString;
+    MathJax.Hub.Typeset();
 }
 
 function computeFrame(): void {
@@ -98,3 +99,6 @@ document.getElementById('stdDev').addEventListener('change', function (event) {
 });
 
 Vision.initCamera();
+convolutionKernel = computeKernel(kernelSize, stdDev);
+displayKernel = expandKernel(convolutionKernel);
+writeMatrix(displayKernel);

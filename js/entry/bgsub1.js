@@ -17,9 +17,7 @@ function getBackgroundFrame() {
 }
 function computeFrame() {
     var inputImage = Vision.getImageFromVideo(document.getElementById('webcam'), document.getElementById('camfeed'));
-    var outputImage = Vision.imageDiff(inputImage, bg);
-    outputImage.draw(document.getElementById('diff'));
-    outputImage = Vision.getForeground(inputImage, bg, threshold);
+    var outputImage = Vision.getForeground(inputImage, bg, threshold);
     outputImage.draw(document.getElementById('foreground'));
     if (animating) {
         requestAnimationFrame(computeFrame);

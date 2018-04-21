@@ -13,6 +13,11 @@
 	 crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm"
 	 crossorigin="anonymous"></script>
+	<style>
+		body {
+			padding-top: 70px;
+		}
+	</style>
 </head>
 
 <body>
@@ -55,27 +60,31 @@
 
 		\(G(x,y)=\frac{1}{{2\pi\sigma^2}}e^{-\frac{x^2+y^2}{2\sigma^2}}\)
 
-		<p>Where \(x\) and \(y\) are the distance from the center. </p>
+		<p>Where \(x\) and \(y\) are the distance from the center, and \(\sigma\) is the standard deviation.  </p>
+
+		<p>Since the kernels for Gaussian blurring are always symmetrical, a square 2x2 kernel doesn't need to be necessarily used for the convolution. To optimise the process, a 1-dimensional kernel is calculated with the same width and standard deviation. The input image is then convolved with the vertical version of that kernel, and the result of that convolution is convolved with the horizontal version of that kernel. This significantly reduces the number of calculations done each frame. </p>
 		<div class="row">
 			<div class="col text-center">
 				<div class="form-group">
 					<label for="kernelSize">Kernel Width</label>
-					<input id="kernelSize" type="number"></input>
-					<br />
+					<input id="kernelSize" type="number" value="3" step="2"></input>
 					<label for="stdDev">Standard Deviation</label>
-					<input id="stdDev" type="number"></input>
+					<input id="stdDev" type="number" value="3"></input>
+					<br />
+					<label for="matrix">Kernel: </label>
+					<div id="matrix"></div>
 					<button id="startBtn">Start Convolving</button>
 					<button id="stopBtn">Stop Convolving</button>
 
 					<br />
 				</div>
+
+				<canvas id="camfeed"></canvas>
+				<canvas id="convolutionout"></canvas>
+				<canvas id="zoomwindow"></canvas>
 			</div>
 		</div>
-		<canvas id="camfeed"></canvas>
-		<canvas id="convolutionout"></canvas>
-		<canvas id="zoomwindow"></canvas>
 
-		<table id="matrix"></table>
 
 		<video id="webcam" autoplay style="display: none"></video>
 
