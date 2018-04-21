@@ -49,8 +49,8 @@
 					the two diagonals in this case because the sobel operator gives the same response for edges on one diagonal as it does
 					on the other. </p>
 
-				<p>To finish edge thinning, each pixel that is the local maximum in it's assigned direction is preserved for the next step,
-					and the rest are discarded.
+				<p>To finish edge thinning, each pixel that is a local maximum in it's assigned direction (i.e. if it's edge gradient is
+					greater than it's neighbours in the specified direction) is preserved for the next step, and the rest are discarded. 
 				</p>
 			</div>
 			<div>
@@ -64,13 +64,19 @@
 				<h2>Hysteresis</h2>
 				<p>In this step, weak edges are either included in the output or discarded. As mentioned before, strong edges are automatically
 					included. Each weak edge is included in the output if it has at least one neighbouring pixel that is a strong edge.
-					</p>
+				</p>
 			</div>
 		</div>
 
-		
-		<button id="startBtn">Start Edge Detection</button>
-		<button id="stopBtn">Stop Edge Detection</button>
+		<p>The two thresholds should in most cases be quite close to each other. The lower threshold should normally be at a point
+			where there are few or no false positives, but there are also gaps in locations where there should be edges, while the
+			upper threshold should be at a point where there are no false negatives, but false positives start to show up. The precise
+			value of these thresholds has to be determined empirically, since different lighting conditions, the textures of surfaces
+			in a scene and many other factors will affect the amount of noise in an image. </p>
+
+
+		<button class="btn btn-dark" id="startBtn">Start Edge Detection</button>
+		<button class="btn btn-dark" id="stopBtn">Stop Edge Detection</button>
 		<br />
 		<input type="range" id="lowerThreshold" min="0" value="10" max="255" step="1" />
 		<input type="range" id="upperThreshold" min="0" value="50" max="255" step="1" />
@@ -88,4 +94,5 @@
 		</script>
 	</div>
 </body>
+
 </html>
