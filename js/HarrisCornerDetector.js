@@ -7,11 +7,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var RGBImage_1 = require("./RGBImage");
 var Vision = __importStar(require("./vision"));
 function getHarrisCorners(image, threshold) {
     image = image.greyScale();
-    var result = RGBImage_1.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    var result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     // Get x and y gradients
     var x_gradients = Vision.greyscaleConvolve(image, Vision.sobelKernel, 3, 3);
     var y_gradients = Vision.greyscaleConvolve(image, Vision.sobelRotated, 3, 3);

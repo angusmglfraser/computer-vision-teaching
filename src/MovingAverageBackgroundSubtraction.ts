@@ -1,26 +1,26 @@
-import { RGBImage } from './RGBImage';
-import { getImageFromVideo } from './vision';
+
+import * as Vision from './vision';
 
 export class MovingAverageBackgroundSubtractor {
-    private buffer: DLinkedList<RGBImage>;
-    private currentBackground: RGBImage;
+    private buffer: DLinkedList<Vision.RGBImage>;
+    private currentBackground: Vision.RGBImage;
     private capacity: number;
 
     constructor(size: number) {
-        this.buffer = new DLinkedList<RGBImage>();
+        this.buffer = new DLinkedList<Vision.RGBImage>();
         this.capacity = size;
         this.currentBackground = null;
     }
 
-    public addFrame(image: RGBImage): void {
+    public addFrame(image: Vision.RGBImage): void {
         let size = this.buffer.getSize();
         if (this.currentBackground == null) {
             this.currentBackground = image;
             this.buffer.add(image);
         } else {
-            let tempModel: RGBImage;
+            let tempModel: Vision.RGBImage;
             if (this.buffer.getSize() < this.capacity) {
-                tempModel = RGBImage.clone(this.currentBackground);
+                tempModel = Vision.RGBImage.clone(this.currentBackground);
                 for (let x = 0; x < image.getWidth(); x++) {
                     for (let y = 0; y < image.getHeight(); y++) {
                         tempModel.r[x][y] *= size;
@@ -32,7 +32,7 @@ export class MovingAverageBackgroundSubtractor {
                     }
                 }
             } else {
-                tempModel = RGBImage.clone(this.currentBackground);
+                tempModel = Vision.RGBImage.clone(this.currentBackground);
                 let toRemove = this.buffer.removeFirstNode();
                 for (let x = 0; x < image.getWidth(); x++) {
                     for (let y = 0; y < image.getHeight(); y++) {
@@ -60,7 +60,7 @@ export class MovingAverageBackgroundSubtractor {
         }
     }
 
-    public getBackgroundModel(): RGBImage {
+    public getBackgroundModel(): Vision.RGBImage {
         return this.currentBackground;
     }
 
@@ -77,8 +77,8 @@ export class MovingAverageBackgroundSubtractor {
     }
 
     private recalculateBackgroundModel(): void {
-        let iter = new DLinkedListIterator<RGBImage>(this.buffer);
-        let background = RGBImage.fromDimensions(this.currentBackground.getWidth(), this.currentBackground.getHeight());
+        let iter = new DLinkedListIterator<Vision.RGBImage>(this.buffer);
+        let background = Vision.RGBImage.fromDimensions(this.currentBackground.getWidth(), this.currentBackground.getHeight());
         while (iter.hasNext()) {
             let frame = iter.next();
             for (let x = 0; x < this.currentBackground.getWidth(); x++) {

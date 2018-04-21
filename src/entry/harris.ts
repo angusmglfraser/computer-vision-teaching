@@ -1,4 +1,3 @@
-import {RGBImage} from '../RGBImage';
 import * as Vision from '../vision';
 import {getHarrisCorners} from '../HarrisCornerDetector';
 

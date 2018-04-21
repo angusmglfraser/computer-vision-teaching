@@ -1,4 +1,5 @@
 import {RGBImage} from './RGBImage';
+export {RGBImage};
 
 export const gaussKernel: Array<Array<number>> = [
 	[1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],

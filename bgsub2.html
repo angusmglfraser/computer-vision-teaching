@@ -6,6 +6,7 @@
     </head>
     <body>
         <h1>Moving Average Background Subtraction</h1>
+        <p>One solution to the problem of noise in background subtraction is to maintain a buffer of recent frames and to use the mean of the frames in that buffer as the background model. This approach mitigates many of the problems evident in naive background subtraction, such as flicker, or background pixels shifting in colour due to lighting changes. However, it still isn't perfect. Objects that enter the scene and stop moving, for example, can be "absorbed" into the background model if they are stationary long enough. Try comparing this example with the naive background subtraction and see how they perform differently. </p>
         <button id="startBtn">Start Background Subtraction</button>
         <button id="stopBtn">Stop Background Subtraction</button>
         <input type="range" min="0" max="255" value="80" class="slider" id="threshold"></input>

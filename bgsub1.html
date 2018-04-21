@@ -6,7 +6,7 @@
     </head>
     <body>
         <h1>Naive Background Subtraction</h1>
-        <p>The naive approach to background subtraction is to simply compare each frame to a fixed background frame. Try stepping out of view of the camera and clicking the "Get New Background Frame" button, to reset the background frame. You can adjust the threshold for which pixels are included in the foreground using the slider. As you will probably notice, various factors like camera noise, flicker, changes in lighting over time and so on will negatively affect the background subtraction making it ineffective. It can also be difficult to get an good background model using this method, since you need a moment in time when there are no objects in the foregorund of the scene. </p>
+        <p>The naive approach to background subtraction is to simply compare each frame to a fixed background frame. Try stepping out of view of the camera and clicking the "Get New Background Frame" button, to reset the background frame. You can adjust the threshold for which pixels are included in the foreground using the slider. As you will probably notice, various factors like camera noise, flicker, changes in lighting over time and so on will negatively affect the background subtraction making it ineffective. It can also be difficult to get a good background model using this method, since you need a moment in time when there are no objects in the foregorund of the scene, and that won't always be the case. </p>
         <button id="startBtn">Start Background Subtraction</button>
         <button id="stopBtn">Stop Background Subtraction</button>
         <button id="getBackground">Get New Background Frame</button>

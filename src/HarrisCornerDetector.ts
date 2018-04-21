@@ -1,10 +1,9 @@
-import { RGBImage } from './RGBImage';
 import * as Vision from './vision';
 
 
-export function getHarrisCorners(image: RGBImage, threshold: number): RGBImage {
+export function getHarrisCorners(image: Vision.RGBImage, threshold: number): Vision.RGBImage {
     image = image.greyScale();
-    let result = RGBImage.fromDimensions(image.getWidth(), image.getHeight());
+    let result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
 
     // Get x and y gradients
     let x_gradients = Vision.greyscaleConvolve(image, Vision.sobelKernel, 3, 3);

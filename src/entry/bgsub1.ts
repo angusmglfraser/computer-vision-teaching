@@ -1,7 +1,6 @@
 import * as Vision from '../vision';
-import {RGBImage} from '../RGBImage';
 
-let bg:RGBImage;
+let bg:Vision.RGBImage;
 let animating = false;
 let threshold = 80;
 

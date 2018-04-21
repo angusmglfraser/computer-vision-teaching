@@ -1,5 +1,4 @@
 import * as Vision from '../vision';
-import { RGBImage } from '../RGBImage';
 
 
 let animating = false;

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
+exports.RGBImage = RGBImage_1.RGBImage;
 exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
