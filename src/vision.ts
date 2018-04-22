@@ -1,5 +1,7 @@
 import { RGBImage } from './RGBImage';
+import { MovingAverageBackgroundSubtractor } from './MovingAverageBackgroundSubtraction';
 export { RGBImage };
+export { MovingAverageBackgroundSubtractor };
 
 export const gaussKernel: Array<Array<number>> = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
@@ -324,20 +326,20 @@ function edgeThinning(image: RGBImage, angles: Array<Array<number>>): RGBImage {
     for (let x = 0; x < image.getWidth(); x++) {
         for (let y = 0; y < image.getHeight(); y++) {
             let angle = angles[x][y];
-            if (angle < 22.5) {
+            if (angle < 22.5) { // Edge is vertical
                 if (image.r[x][y] == Math.max(image.r[(x + 1) % image.getWidth()][y], image.r[Math.abs(x - 1)][y], image.r[x][y])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
-            } else if (angle < 67.5) {
+            } else if (angle < 67.5) { // Edge is diagonal
                 if (image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][(y + 1) % image.getHeight()], image.r[Math.abs(x - 1)][Math.abs(y - 1)])
                     || image.r[x][y] == Math.max(image.r[x][y], image.r[(x + 1) % image.getWidth()][Math.abs(y - 1)], image.r[Math.abs(x - 1)][(y + 1) % image.getHeight()])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
                 }
-            } else {
+            } else { // Edge is horizontal
                 if (image.r[x][y] == Math.max(image.r[x][(y + 1) % image.getHeight()], image.r[x][Math.abs(y - 1)], image.r[x][y])) {
                     result.r[x][y] = result.g[x][y] = result.b[x][y] = image.r[x][y];
                 } else {

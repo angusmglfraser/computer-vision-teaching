@@ -7,13 +7,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var MovingAverageBackgroundSubtraction_1 = require("../MovingAverageBackgroundSubtraction");
 var Vision = __importStar(require("../vision"));
 var bg;
 var animating = false;
 var threshold = 80;
 var bufferSize = 20;
-var subtractor = new MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor(bufferSize);
+var subtractor = new Vision.MovingAverageBackgroundSubtractor(bufferSize);
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var inputFrame = Vision.getImageFromVideo(videoElement, document.getElementById('camfeed'));

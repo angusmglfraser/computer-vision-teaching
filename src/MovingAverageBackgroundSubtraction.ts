@@ -1,4 +1,3 @@
-
 import * as Vision from './vision';
 
 export class MovingAverageBackgroundSubtractor {

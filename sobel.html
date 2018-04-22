@@ -33,18 +33,34 @@
 		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
 			<ul class="navbar-nav mr-auto">
 				<li class="nav-item active">
-					<a class="nav-link" href="#">Home
+					<a class="nav-link" href="index.html">Home
 						<span class="sr-only">(current)</span>
 					</a>
 				</li>
+
 				<li class="nav-item active">
-					<a class="nav-link" href="#"> Link </a>
+					<a class="nav-link" href="gauss.html">Gaussian Blur
+					</a>
 				</li>
-				<li class="nav-item active">
-					<a class="nav-link" href="#"> Link </a>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+					 aria-expanded="false">
+						Edge Detection
+					</a>
+					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+						<a class="dropdown-item" href="sobel.html">Sobel Edge Detection</a>
+						<a class="dropdown-item" href="canny.html">Canny Edge Detection</a>
+					</div>
 				</li>
-				<li class="nav-item active">
-					<a class="nav-link" href="#"> Link </a>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+					 aria-expanded="false">
+						Background Subtraction
+					</a>
+					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+						<a class="dropdown-item" href="bgsub1.html">Naive Background Subtraction</a>
+						<a class="dropdown-item" href="bgsub2.html">Moving Average Background Subtraction</a>
+					</div>
 				</li>
 			</ul>
 		</div>
@@ -52,12 +68,7 @@
 
 	<main role="main" class="container">
 		<h1>Sobel Edge Detection</h1>
-		\( \begin{bmatrix}
-			1 & 2 & 1 \\
-			0 & 0 & 0 \\
-			-1 & -2 & -1
-			\end{bmatrix}
-		\)
+		\( \begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ -1 & -2 & -1 \end{bmatrix} \)
 		<p>
 			The Sobel operator is a kernel used for edge detection. The kernel can, however, only detect a gradient in intensity along
 			one direction, so with this kernel, a perfectly vertical edge would not register, and as an edge moves from being horizontal
@@ -67,18 +78,21 @@
 			the first two images as it is being rotated, but changes little in the image that combines the two.
 		</p>
 
+		<div class="row">
+			<div class="col text-center">
+				<div class="form-group">
+					<button class="btn btn-dark" id="startBtn">Start Edge Detection</button>
+					<button class="btn btn-dark" id="stopBtn">Stop Edge Detection</button>
+					<input type="checkbox" id="gaussianToggle" />Gaussian Blur
+					<br />
+				</div>
 
-		<button id="startBtn">Start Edge Detection</button>
-		<button id="stopBtn">Stop Edge Detection</button>
-		<input type="checkbox" id="gaussianToggle" />Gaussian Blur
-		<br />
-
-		<canvas id="camfeed"></canvas>
-		<canvas id="sobelx"></canvas>
-		<canvas id="sobely"></canvas>
-		<canvas id="sobelboth"></canvas>
-
-		<canvas id="zoomwindow"></canvas>
+				<canvas id="camfeed"></canvas>
+				<canvas id="sobelx"></canvas>
+				<canvas id="sobely"></canvas>
+				<canvas id="sobelboth"></canvas>
+			</div>
+		</div>
 
 
 		<video id="webcam" autoplay style="display: none"></video>

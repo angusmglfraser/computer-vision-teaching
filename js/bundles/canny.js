@@ -1,5 +1,174 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+var Vision = __importStar(require("./vision"));
+var MovingAverageBackgroundSubtractor = /** @class */ (function () {
+    function MovingAverageBackgroundSubtractor(size) {
+        this.buffer = new DLinkedList();
+        this.capacity = size;
+        this.currentBackground = null;
+    }
+    MovingAverageBackgroundSubtractor.prototype.addFrame = function (image) {
+        var size = this.buffer.getSize();
+        if (this.currentBackground == null) {
+            this.currentBackground = image;
+            this.buffer.add(image);
+        }
+        else {
+            var tempModel = void 0;
+            if (this.buffer.getSize() < this.capacity) {
+                tempModel = Vision.RGBImage.clone(this.currentBackground);
+                for (var x = 0; x < image.getWidth(); x++) {
+                    for (var y = 0; y < image.getHeight(); y++) {
+                        tempModel.r[x][y] *= size;
+                        tempModel.g[x][y] *= size;
+                        tempModel.b[x][y] *= size;
+                        tempModel.r[x][y] += image.r[x][y];
+                        tempModel.g[x][y] += image.g[x][y];
+                        tempModel.b[x][y] += image.b[x][y];
+                    }
+                }
+            }
+            else {
+                tempModel = Vision.RGBImage.clone(this.currentBackground);
+                var toRemove = this.buffer.removeFirstNode();
+                for (var x = 0; x < image.getWidth(); x++) {
+                    for (var y = 0; y < image.getHeight(); y++) {
+                        tempModel.r[x][y] *= size;
+                        tempModel.g[x][y] *= size;
+                        tempModel.b[x][y] *= size;
+                        tempModel.r[x][y] -= toRemove.r[x][y];
+                        tempModel.g[x][y] -= toRemove.g[x][y];
+                        tempModel.b[x][y] -= toRemove.b[x][y];
+                        tempModel.r[x][y] += image.r[x][y];
+                        tempModel.g[x][y] += image.g[x][y];
+                        tempModel.b[x][y] += image.b[x][y];
+                    }
+                }
+            }
+            this.buffer.add(image);
+            for (var x = 0; x < image.getWidth(); x++) {
+                for (var y = 0; y < image.getHeight(); y++) {
+                    tempModel.r[x][y] /= this.buffer.getSize();
+                    tempModel.g[x][y] /= this.buffer.getSize();
+                    tempModel.b[x][y] /= this.buffer.getSize();
+                }
+            }
+            this.currentBackground = tempModel;
+        }
+    };
+    MovingAverageBackgroundSubtractor.prototype.getBackgroundModel = function () {
+        return this.currentBackground;
+    };
+    MovingAverageBackgroundSubtractor.prototype.setBufferSize = function (num) {
+        if (num > this.buffer.getSize()) {
+            this.capacity = num;
+        }
+        else {
+            this.capacity = num;
+            while (this.buffer.getSize() > this.capacity) {
+                this.buffer.removeFirstNode();
+            }
+            this.recalculateBackgroundModel();
+        }
+    };
+    MovingAverageBackgroundSubtractor.prototype.recalculateBackgroundModel = function () {
+        var iter = new DLinkedListIterator(this.buffer);
+        var background = Vision.RGBImage.fromDimensions(this.currentBackground.getWidth(), this.currentBackground.getHeight());
+        while (iter.hasNext()) {
+            var frame = iter.next();
+            for (var x = 0; x < this.currentBackground.getWidth(); x++) {
+                for (var y = 0; y < this.currentBackground.getHeight(); y++) {
+                    background.r[x][y] += frame.r[x][y];
+                    background.g[x][y] += frame.g[x][y];
+                    background.b[x][y] += frame.b[x][y];
+                }
+            }
+        }
+        for (var x = 0; x < this.currentBackground.getWidth(); x++) {
+            for (var y = 0; y < this.currentBackground.getHeight(); y++) {
+                background.r[x][y] = background.r[x][y] / this.buffer.getSize();
+                background.g[x][y] = background.g[x][y] / this.buffer.getSize();
+                background.b[x][y] = background.b[x][y] / this.buffer.getSize();
+            }
+        }
+    };
+    return MovingAverageBackgroundSubtractor;
+}());
+exports.MovingAverageBackgroundSubtractor = MovingAverageBackgroundSubtractor;
+var DLinkedListIterator = /** @class */ (function () {
+    function DLinkedListIterator(buf) {
+        this.currentNode = buf.getFirstNode();
+    }
+    DLinkedListIterator.prototype.hasNext = function () {
+        return this.currentNode.next != null && this.currentNode.next != undefined;
+    };
+    DLinkedListIterator.prototype.next = function () {
+        var res = this.currentNode.data;
+        this.currentNode = this.currentNode.next;
+        return res;
+    };
+    return DLinkedListIterator;
+}());
+var DLinkedList = /** @class */ (function () {
+    function DLinkedList() {
+        this.size = 0;
+    }
+    DLinkedList.prototype.add = function (obj) {
+        if (this.size == 0) {
+            this.first = new Node(obj);
+            this.last = this.first;
+        }
+        else {
+            this.last.next = new Node(obj);
+            this.last.next.previous = this.last;
+            this.last = this.last.next;
+        }
+        this.size++;
+    };
+    DLinkedList.prototype.removeFirstNode = function () {
+        var result = this.first.data;
+        this.first = this.first.next;
+        this.first.previous = null;
+        this.size--;
+        return result;
+    };
+    DLinkedList.prototype.removeLastNode = function () {
+        var result = this.last.data;
+        this.last = this.last.previous;
+        this.last.next = null;
+        this.size--;
+        return result;
+    };
+    DLinkedList.prototype.getFirstNode = function () {
+        return this.first;
+    };
+    DLinkedList.prototype.getLastNode = function () {
+        return this.last;
+    };
+    DLinkedList.prototype.getSize = function () {
+        return this.size;
+    };
+    return DLinkedList;
+}());
+var Node = /** @class */ (function () {
+    function Node(obj) {
+        this.data = obj;
+        this.previous = null;
+        this.next = null;
+    }
+    return Node;
+}());
+
+},{"./vision":4}],2:[function(require,module,exports){
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage = /** @class */ (function () {
     function RGBImage() {
@@ -134,7 +303,7 @@ var RGBImage = /** @class */ (function () {
 }());
 exports.RGBImage = RGBImage;
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
@@ -163,11 +332,13 @@ document.getElementById('startBtn').addEventListener('click', function (event) {
 });
 Vision.initCamera();
 
-},{"../vision":3}],3:[function(require,module,exports){
+},{"../vision":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
 exports.RGBImage = RGBImage_1.RGBImage;
+var MovingAverageBackgroundSubtraction_1 = require("./MovingAverageBackgroundSubtraction");
+exports.MovingAverageBackgroundSubtractor = MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor;
 exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
@@ -573,4 +744,4 @@ function getCannyEdges(image, threshold1, threshold2) {
 }
 exports.getCannyEdges = getCannyEdges;
 
-},{"./RGBImage":1}]},{},[2]);
+},{"./MovingAverageBackgroundSubtraction":1,"./RGBImage":2}]},{},[3]);

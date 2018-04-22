@@ -313,13 +313,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-var MovingAverageBackgroundSubtraction_1 = require("../MovingAverageBackgroundSubtraction");
 var Vision = __importStar(require("../vision"));
 var bg;
 var animating = false;
 var threshold = 80;
 var bufferSize = 20;
-var subtractor = new MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor(bufferSize);
+var subtractor = new Vision.MovingAverageBackgroundSubtractor(bufferSize);
 function computeFrame() {
     var videoElement = document.getElementById('webcam');
     var inputFrame = Vision.getImageFromVideo(videoElement, document.getElementById('camfeed'));
@@ -347,11 +346,13 @@ document.getElementById('bufferSize').addEventListener('change', function (event
 });
 Vision.initCamera();
 
-},{"../MovingAverageBackgroundSubtraction":1,"../vision":4}],4:[function(require,module,exports){
+},{"../vision":4}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var RGBImage_1 = require("./RGBImage");
 exports.RGBImage = RGBImage_1.RGBImage;
+var MovingAverageBackgroundSubtraction_1 = require("./MovingAverageBackgroundSubtraction");
+exports.MovingAverageBackgroundSubtractor = MovingAverageBackgroundSubtraction_1.MovingAverageBackgroundSubtractor;
 exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273],
     [4 / 273, 16 / 273, 26 / 273, 16 / 273, 4 / 273],
@@ -757,4 +758,4 @@ function getCannyEdges(image, threshold1, threshold2) {
 }
 exports.getCannyEdges = getCannyEdges;
 
-},{"./RGBImage":2}]},{},[3]);
+},{"./MovingAverageBackgroundSubtraction":1,"./RGBImage":2}]},{},[3]);

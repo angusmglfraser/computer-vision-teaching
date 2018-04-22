@@ -1,11 +1,10 @@
-import { MovingAverageBackgroundSubtractor } from '../MovingAverageBackgroundSubtraction';
 import * as Vision from '../vision';
 
 let bg: Vision.RGBImage;
 let animating = false;
 let threshold = 80;
 let bufferSize = 20;
-let subtractor: MovingAverageBackgroundSubtractor = new MovingAverageBackgroundSubtractor(bufferSize);
+let subtractor: Vision.MovingAverageBackgroundSubtractor = new Vision.MovingAverageBackgroundSubtractor(bufferSize);
 
 function computeFrame() {
     let videoElement = document.getElementById('webcam') as HTMLVideoElement;
