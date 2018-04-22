@@ -1,2 +1,2 @@
-# computer-vision-teaching
-Web-based teaching materials for computer vision
+# Web and Vision: Teaching Materials
+Here are some web-based implementations of some fundamental concepts and algorithms in computer vision, all implemented directly in Typescript, without libraries. 
