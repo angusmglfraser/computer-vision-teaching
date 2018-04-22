@@ -11,8 +11,8 @@ function computeFrame(): void {
 		inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
 	}
 	inputImage = inputImage.greyScale();
-	let x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
-	let y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
+	let x = Vision.greyscaleConvolve(inputImage, Vision.sobelX, 3, 3);
+	let y = Vision.greyscaleConvolve(inputImage, Vision.sobelY, 3, 3);
 	let both = Vision.combineConvolutions(x, y);
 
 	x.draw(document.getElementById('sobelx') as HTMLCanvasElement);

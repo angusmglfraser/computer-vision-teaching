@@ -12,8 +12,8 @@ function getHarrisCorners(image, threshold) {
     image = image.greyScale();
     var result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
     // Get x and y gradients
-    var x_gradients = Vision.greyscaleConvolve(image, Vision.sobelKernel, 3, 3);
-    var y_gradients = Vision.greyscaleConvolve(image, Vision.sobelRotated, 3, 3);
+    var x_gradients = Vision.greyscaleConvolve(image, Vision.sobelX, 3, 3);
+    var y_gradients = Vision.greyscaleConvolve(image, Vision.sobelY, 3, 3);
     for (var x = 1; x < image.getWidth() - 1; x++) {
         for (var y = 1; y < image.getHeight() - 1; y++) {
             // calculate image gradients over window

@@ -322,8 +322,8 @@ function computeFrame() {
         inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
     }
     inputImage = inputImage.greyScale();
-    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
+    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelX, 3, 3);
+    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelY, 3, 3);
     var both = Vision.combineConvolutions(x, y);
     x.draw(document.getElementById('sobelx'));
     y.draw(document.getElementById('sobely'));
@@ -364,12 +364,12 @@ exports.gaussKernel = [
     [1 / 273, 4 / 273, 7 / 273, 4 / 273, 1 / 273]
 ];
 exports.gauss1d = [0.06136, 0.24477, 0.38774, 0.24477, 0.06136];
-exports.sobelKernel = [
+exports.sobelX = [
     [1, 0, -1],
     [2, 0, -2],
     [1, 0, -1]
 ];
-exports.sobelRotated = [
+exports.sobelY = [
     [1, 2, 1],
     [0, 0, 0],
     [-1, -2, -1]
@@ -751,8 +751,8 @@ function hysteresis(strengths) {
 function getCannyEdges(image, threshold1, threshold2) {
     image = image.greyScale();
     var blurred = convolve1d(image, exports.gauss1d);
-    var gx = greyscaleConvolve(blurred, exports.sobelKernel, 3, 3);
-    var gy = greyscaleConvolve(blurred, exports.sobelRotated, 3, 3);
+    var gx = greyscaleConvolve(blurred, exports.sobelX, 3, 3);
+    var gy = greyscaleConvolve(blurred, exports.sobelY, 3, 3);
     var intensity = combineConvolutions(gx, gy);
     var directions = computeEdgeAngles(gx, gy);
     var thinnedEdges = edgeThinning(intensity, directions);

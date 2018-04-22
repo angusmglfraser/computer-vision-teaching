@@ -16,8 +16,8 @@ function computeFrame() {
         inputImage = Vision.convolve(inputImage, Vision.gaussKernel, 5, 5);
     }
     inputImage = inputImage.greyScale();
-    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelKernel, 3, 3);
-    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelRotated, 3, 3);
+    var x = Vision.greyscaleConvolve(inputImage, Vision.sobelX, 3, 3);
+    var y = Vision.greyscaleConvolve(inputImage, Vision.sobelY, 3, 3);
     var both = Vision.combineConvolutions(x, y);
     x.draw(document.getElementById('sobelx'));
     y.draw(document.getElementById('sobely'));

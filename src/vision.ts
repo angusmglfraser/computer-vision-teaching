@@ -13,12 +13,12 @@ export const gaussKernel: Array<Array<number>> = [
 
 export const gauss1d = [0.06136, 0.24477, 0.38774, 0.24477, 0.06136];
 
-export const sobelKernel = [
+export const sobelX = [
     [1, 0, -1],
     [2, 0, -2],
     [1, 0, -1]
 ];
-export const sobelRotated = [
+export const sobelY = [
     [1, 2, 1],
     [0, 0, 0],
     [-1, -2, -1]
@@ -424,8 +424,8 @@ function hysteresis(strengths: Array<Array<EdgeStrength>>): RGBImage {
 export function getCannyEdges(image: RGBImage, threshold1: number, threshold2: number) {
     image = image.greyScale();
     let blurred = convolve1d(image, gauss1d);
-    let gx = greyscaleConvolve(blurred, sobelKernel, 3, 3);
-    let gy = greyscaleConvolve(blurred, sobelRotated, 3, 3);
+    let gx = greyscaleConvolve(blurred, sobelX, 3, 3);
+    let gy = greyscaleConvolve(blurred, sobelY, 3, 3);
     let intensity = combineConvolutions(gx, gy);
     let directions = computeEdgeAngles(gx, gy);
     let thinnedEdges = edgeThinning(intensity, directions);
