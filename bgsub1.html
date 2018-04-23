@@ -18,6 +18,16 @@
         body {
             padding-top: 70px;
         }
+
+        h1 {
+            padding-left: 10%;
+            padding-right: 10%;
+        }
+
+        p {
+            padding-left: 10%;
+            padding-right: 10%;
+        }
     </style>
 </head>
 
@@ -66,7 +76,7 @@
             </ul>
         </div>
     </nav>
-    <main role="main" class="container">
+    <main role="main" class="container-fluid">
         <h1>Naive Background Subtraction</h1>
         <p>The naive approach to background subtraction is to simply compare each frame to a fixed background frame. Try stepping
             out of view of the camera and clicking the "Get New Background Frame" button, to reset the background frame.
@@ -84,14 +94,28 @@
                     <button class="btn btn-dark" id="stopBtn">Stop Background Subtraction</button>
                     <button class="btn btn-dark" id="getBackground">Get New Background Frame</button>
                     <label for="threshold">Threshold</label>
-                    <input type="range" min="0" max="255" value="80" class="slider" id="threshold"></input>
+                    <input type="range" min="0" max="255" value="80" class="slider" id="threshold">
                     <br />
                 </div>
-                <canvas id="camfeed"></canvas>
-                <canvas id="foreground"></canvas>
-                <canvas id="backgroundModel"></canvas>
+                <div class="row">
+                    <div class="col-xl-6">
+                        <h3>Camera Input</h3>
+                        <canvas id="camfeed"></canvas>
+                    </div>
+                    <div class="col-xl-6">
+                        <h3>Foreground</h3>
+                        <canvas id="foreground"></canvas>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h3>Background Model</h3>
+                        <canvas id="backgroundModel"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
+
 
         <video id="webcam" autoplay style="display: none"></video>
     </main>

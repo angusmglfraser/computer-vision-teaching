@@ -8,7 +8,7 @@
 	<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=TeX-MML-AM_CHTML' async></script>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
 	 crossorigin="anonymous">
-	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5xlXKp4YfRvH+8abtTE1Pi6jizo"
 	 crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ"
 	 crossorigin="anonymous"></script>
@@ -17,6 +17,16 @@
 	<style>
 		body {
 			padding-top: 70px;
+		}
+
+		h1 {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
+
+		p {
+			padding-left: 10%;
+			padding-right: 10%;
 		}
 	</style>
 </head>
@@ -67,18 +77,20 @@
 		</div>
 	</nav>
 
-	<main role="main" class="container">
+	<main role="main" class="container-fluid">
 		<h1>Sobel Edge Detection</h1>
-		\( \begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ -1 & -2 & -1 \end{bmatrix} \)
+		<div class="text-center">
+			\( \begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ -1 & -2 & -1 \end{bmatrix} \)
+		</div>
+		</br>
 		<p>
 			The Sobel operator is a kernel used for edge detection. The kernel can, however, only detect a gradient in intensity along
 			one direction, so with this kernel, a perfectly vertical edge would not register, and as an edge moves from being horizontal
 			to vertical, it becomes less intense in the output of the convolution. Below you can see the result of convolving an image
 			with this matrix, then with the same matrix rotated 90 degrees, and then with a combined value for the two. Try taking
 			an object with a straight edge, holding it up to the camera and rotating it. See how the edge changes in intensity in
-			the first two images as it is being rotated, but changes little in the image that combines the two. Noise in textured
-			areas of the scene can be problematic. You can toggle gaussian blurring to see how it smooths out textures somewhat while
-			preserving sharp edges.
+			the first two images as it is being rotated, but changes little in the image that combines the two. You can toggle gaussian
+			blurring to see how it smooths out textures somewhat while preserving sharp edges.
 		</p>
 
 		<div class="row">
@@ -90,13 +102,29 @@
 					<br />
 				</div>
 
-				<canvas id="camfeed"></canvas>
-				<canvas id="sobelx"></canvas>
-				<canvas id="sobely"></canvas>
-				<canvas id="sobelboth"></canvas>
+				<div class="row">
+					<div class="col-xl-6">
+						<h3>Camera Input</h3>
+						<canvas id="camfeed"></canvas>
+					</div>
+					<div class="col-xl-6">
+						<h3>X Edges</h3>
+						<canvas id="sobelx"></canvas>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xl-6">
+						<h3>Y Edges</h3>
+						<canvas id="sobely"></canvas>
+					</div>
+					<div class="col-xl-6">
+						<h3>Combined Edges</h3>
+						<canvas id="sobelboth"></canvas>
+					</div>
+				</div>
 			</div>
 		</div>
-
 
 		<video id="webcam" autoplay style="display: none"></video>
 	</main>

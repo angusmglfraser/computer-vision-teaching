@@ -18,6 +18,16 @@
         body {
             padding-top: 70px;
         }
+
+        h1 {
+            padding-left: 10%;
+            padding-right: 10%;
+        }
+
+        p {
+            padding-left: 10%;
+            padding-right: 10%;
+        }
     </style>
 </head>
 
@@ -66,7 +76,7 @@
             </ul>
         </div>
     </nav>
-    <main role="main" class="container">
+    <main role="main" class="container-fluid">
         <h1>Moving Average Background Subtraction</h1>
         <p>One solution to the problem of noise in background subtraction is to maintain a buffer of recent frames and to use
             the mean of the frames in that buffer as the background model. This approach mitigates many of the problems evident
@@ -81,14 +91,27 @@
                     <button class="btn btn-dark" id="startBtn">Start Background Subtraction</button>
                     <button class="btn btn-dark" id="stopBtn">Stop Background Subtraction</button>
                     <label for="threshold">Threshold</label>
-                    <input type="range" min="0" max="255" value="80" class="slider" id="threshold"></input>
+                    <input type="range" min="0" max="255" value="80" class="slider" id="threshold">
                     <label for="bufferSize">Buffer Size(frames)</label>
-                    <input type="number" min="1" max="150" value="20" id="bufferSize"></input>
+                    <input type="number" min="1" value="20" id="bufferSize" step="1">
                     <br />
                 </div>
-                <canvas id="camfeed"></canvas>
-                <canvas id="foreground"></canvas>
-                <canvas id="backgroundModel"></canvas>
+                <div class="row">
+                    <div class="col-xl-6">
+                        <h3>Camera Input</h3>
+                        <canvas id="camfeed"></canvas>
+                    </div>
+                    <div class="col-xl-6">
+                        <h3>Foreground</h3>
+                        <canvas id="foreground"></canvas>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h3>Background Model</h3>
+                        <canvas id="backgroundModel"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -18,6 +18,21 @@
 		body {
 			padding-top: 70px;
 		}
+
+		h1 {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
+
+		p {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
+
+		h3 {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
 	</style>
 
 </head>
@@ -68,7 +83,7 @@
 		</div>
 	</nav>
 
-	<main role="main" class="container">
+	<main role="main" class="container-fluid">
 
 		<h1>Canny Edge Detection</h1>
 		<p>The Canny edge detector is a slightly more advanced approach to edge detection. It employs a few different techniques to
@@ -88,9 +103,9 @@
 			at which the change in intensity is greatest. To do this, first the edge angles are computed, and then rounded to the
 			nearest increment of 45 degrees. Since the two convolutions with the sobel operator give edge intensity in both the x
 			and y directions, the angle of an edge at any specific pixel can be calculated using the following formula:</p>
-
-		\(\theta = atan2(G_x, G_y) \)
-
+		<div class="text-center">
+			\(\theta = atan2(G_x, G_y) \)
+		</div>
 		</br>
 		<p>Where \( G \) is the intensity of the edge in the x or y direction.</p>
 
@@ -135,16 +150,22 @@
 					<br />
 				</div>
 
+				<div class="row">
+					<div class="col-xl-6">
+						<h3>Camera Input</h3>
+						<canvas id="camfeed"></canvas>
+					</div>
+					<div class="col-xl-6">
+						<h3>Canny Edges</h3>
+						<canvas id="cannyoutput"></canvas>
+					</div>
+				</div>
 
-				<canvas id="camfeed"></canvas>
-
-				<canvas id="cannyoutput"></canvas>
-
-
-				<video id="webcam" autoplay style="display: none"></video>
 
 			</div>
 		</div>
+		<video id="webcam" autoplay style="display: none"></video>
+
 	</main>
 	<script src="js/bundles/canny.js">
 	</script>

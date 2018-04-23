@@ -18,6 +18,16 @@
 		body {
 			padding-top: 70px;
 		}
+
+		h1 {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
+
+		p {
+			padding-left: 10%;
+			padding-right: 10%;
+		}
 	</style>
 </head>
 
@@ -66,7 +76,7 @@
 			</ul>
 		</div>
 	</nav>
-	<main role="main" class="container">
+	<main role="main" class="container-fluid">
 		<h1>Image smoothing with Gaussian Blurring</h1>
 		<p>
 			In anything that deals with sensor data, there will inevitably be some noise. One way to deal with noise in image data is
@@ -75,7 +85,9 @@
 			The function to calculate the values for a Gaussian convolution matrix is:
 		</p>
 
-		\(G(x,y)=\frac{1}{{2\pi\sigma^2}}e^{-\frac{x^2+y^2}{2\sigma^2}}\)
+		<div class="text-center">
+			\(G(x,y)=\frac{1}{{2\pi\sigma^2}}e^{-\frac{x^2+y^2}{2\sigma^2}}\)
+		</div>
 
 		<p>Where \(x\) and \(y\) are the distance from the center, and \(\sigma\) is the standard deviation. </p>
 
@@ -98,9 +110,16 @@
 
 					<br />
 				</div>
-
-				<canvas id="camfeed"></canvas>
-				<canvas id="convolutionout"></canvas>
+				<div class="row">
+					<div class="col-xl-6">
+						<h3>Camera Input</h3>
+						<canvas id="camfeed"></canvas>
+					</div>
+					<div class="col-xl-6">
+						<h3>Gaussian Blur Output</h3>
+						<canvas id="convolutionout"></canvas>
+					</div>
+				</div>
 			</div>
 		</div>
 
