@@ -53,7 +53,7 @@
 					<a class="nav-link" href="./gauss.html">Gaussian Blur
 					</a>
 				</li>
-				<li class="nav-item dropdown">
+				<li class="nav-item dropdown active">
 					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
 					 aria-expanded="false">
 						Edge Detection
@@ -63,7 +63,7 @@
 						<a class="dropdown-item" href="./canny.html">Canny Edge Detection</a>
 					</div>
 				</li>
-				<li class="nav-item dropdown">
+				<li class="nav-item dropdown active">
 					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
 					 aria-expanded="false">
 						Background Subtraction
@@ -73,6 +73,9 @@
 						<a class="dropdown-item" href="./bgsub2.html">Moving Average Background Subtraction</a>
 					</div>
 				</li>
+				<li>
+					<a class="nav-link active" href="./src/">Source Code</a>
+				</li>
 			</ul>
 		</div>
 	</nav>
@@ -81,8 +84,8 @@
 		<p>
 			In anything that deals with sensor data, there will inevitably be some noise. One way to deal with noise in image data is
 			to blur the image using a Gaussian function. A Gaussian blur is essentially a function where each pixel in an output image
-			is equal to a weighted average of it's neighbouring pixels, where the weights are given according to a normal distribution.
-			The function to calculate the values for a Gaussian convolution matrix is:
+			is equal to a weighted average of it's neighbouring pixels in the input image, where the weights are given according to
+			a normal distribution. The function to calculate the values for a Gaussian convolution matrix is:
 		</p>
 
 		<div class="text-center">
@@ -91,10 +94,10 @@
 
 		<p>Where \(x\) and \(y\) are the distance from the center, and \(\sigma\) is the standard deviation. </p>
 
-		<p>Since the kernels for Gaussian blurring are always symmetrical, a square 2x2 kernel doesn't need to be necessarily used
-			for the convolution. To optimise the process, a 1-dimensional kernel is calculated with the same width and standard deviation.
-			The input image is then convolved with the vertical version of that kernel, and the result of that convolution is convolved
-			with the horizontal version of that kernel. This significantly reduces the number of calculations done each frame. </p>
+		<p>Since the kernels for Gaussian blurring are always symmetrical, a square kernel doesn't need to be necessarily used for
+			the convolution. To optimise the process, a 1-dimensional kernel is calculated with the same width and standard deviation.
+			The input image is then convolved with the kernel in one direction and then the other. This significantly reduces the
+			number of calculations done each frame, making the process more efficient. </p>
 		<div class="row">
 			<div class="col text-center">
 				<div class="form-group">
