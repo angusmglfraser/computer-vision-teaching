@@ -346,7 +346,7 @@ function dualThresholding(image, threshold1, threshold2) {
                 strengths[x][y] = EdgeStrength.WEAK_EDGE;
             }
             else {
-                strengths[x][y] = 0;
+                strengths[x][y] = EdgeStrength.NO_EDGE;
             }
         }
     }
@@ -362,29 +362,30 @@ function hysteresis(strengths) {
     var output = RGBImage_1.RGBImage.fromDimensions(width, height);
     for (var x = 0; x < width; x++) {
         for (var y = 0; y < height; y++) {
-            if (strengths[x][y] === EdgeStrength.STRONG_EDGE) {
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = 255;
-            }
-            else if (strengths[x][y] === EdgeStrength.WEAK_EDGE) {
-                // blob analysis
-                var isEdge = false;
-                var val = 0;
-                for (var blobx = x - 1; blobx <= x + 1; blobx++) {
-                    for (var bloby = y - 1; bloby <= y + 1; bloby++) {
-                        if (strengths[Math.abs(blobx) % width][Math.abs(bloby) % height] === EdgeStrength.STRONG_EDGE) {
-                            isEdge = true;
-                            val = 255;
+            switch (strengths[x][y]) {
+                case EdgeStrength.STRONG_EDGE:
+                    output.r[x][y] = output.g[x][y] = output.b[x][y] = 255;
+                    break;
+                case EdgeStrength.WEAK_EDGE:
+                    // blob analysis
+                    var isEdge = false;
+                    var val = 0;
+                    for (var blobx = x - 1; blobx <= x + 1; blobx++) {
+                        for (var bloby = y - 1; bloby <= y + 1; bloby++) {
+                            if (strengths[Math.abs(blobx) % width][Math.abs(bloby) % height] === EdgeStrength.STRONG_EDGE) {
+                                isEdge = true;
+                                val = 255;
+                                break;
+                            }
+                        }
+                        if (isEdge) {
                             break;
                         }
                     }
-                    if (isEdge) {
-                        break;
-                    }
-                }
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = val;
-            }
-            else {
-                output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
+                    output.r[x][y] = output.g[x][y] = output.b[x][y] = val;
+                    break;
+                default:
+                    output.r[x][y] = output.g[x][y] = output.b[x][y] = 0;
             }
         }
     }
