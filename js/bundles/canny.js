@@ -320,7 +320,7 @@ function computeFrame() {
     var output = Vision.getCannyEdges(inputImage, +document.getElementById('lowerThreshold').value, +document.getElementById('upperThreshold').value);
     output.draw(document.getElementById('cannyoutput'));
     if (animating) {
-        console.log(requestAnimationFrame(computeFrame));
+        requestAnimationFrame(computeFrame);
     }
 }
 document.getElementById('stopBtn').addEventListener('click', function (event) {

@@ -10,7 +10,7 @@ function computeFrame(): void {
     output.draw(document.getElementById('cannyoutput') as HTMLCanvasElement);
 
     if (animating) {
-        console.log(requestAnimationFrame(computeFrame));
+        requestAnimationFrame(computeFrame);
     }
 }
 
