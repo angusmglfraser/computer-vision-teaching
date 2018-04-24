@@ -488,8 +488,8 @@ function greyscaleConvolve(image, kernel, kernelWidth, kernelHeight) {
     var output = RGBImage_1.RGBImage.fromDimensions(width, height);
     var offsetX = Math.floor(kernelWidth / 2);
     var offsetY = Math.floor(kernelHeight / 2);
-    for (var x = 0; x < image.getWidth(); x++) {
-        for (var y = 0; y < image.getHeight(); y++) {
+    for (var x = 0; x < width; x++) {
+        for (var y = 0; y < height; y++) {
             var acc = 0;
             for (var kx = 0; kx < kernelWidth; kx++) {
                 for (var ky = 0; ky < kernelHeight; ky++) {

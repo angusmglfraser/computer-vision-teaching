@@ -107,8 +107,8 @@ export function greyscaleConvolve(image: RGBImage, kernel: Array<Array<number>>,
     let offsetX = Math.floor(kernelWidth / 2);
     let offsetY = Math.floor(kernelHeight / 2);
 
-    for (let x = 0; x < image.getWidth(); x++) {
-        for (let y = 0; y < image.getHeight(); y++) {
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
             let acc = 0;
 
             for (let kx = 0; kx < kernelWidth; kx++) {
