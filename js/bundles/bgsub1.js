@@ -555,10 +555,10 @@ function initCamera() {
         var alertString = errType;
         switch (errType) {
             case "NotSupportedError":
-                alertString += "\n If you are using Google Chrome, try changing the 'http' at the start of the url to 'https', or using a different web browser, such as Firefox";
+                alertString += "\nIf you are using Google Chrome, try changing the 'http' at the start of the url to 'https', or using a different web browser, such as Firefox";
                 break;
             case "NotReadableError":
-                alertString += "\n Please make sure that your webcam is connected and not currently being used by another application.";
+                alertString += "\nPlease make sure that your webcam is connected and enabled, and not currently being used by another application.";
                 break;
             case "NotAllowedError":
                 return;
