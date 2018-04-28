@@ -16,27 +16,29 @@ export function getHarrisCorners(image: Vision.RGBImage, threshold: number): Vis
             let yacc = 0;
             for (let i = x - 1; i <= x + 1; i++) {
                 for (let j = y - 1; j <= y + 1; j++) {
-                    xacc += x_gradients.r[i][j];
-                    yacc += y_gradients.r[i][j];
+                    xacc += Math.abs(x_gradients.r[i][j] - x_gradients.r[x][y]);
+                    yacc += Math.abs(y_gradients.r[i][j] - y_gradients.r[x][y]);
                 }
             }
             xacc /= 9;
             yacc /= 9;
+            xacc /= 255;
+            yacc /= 255;
             //calculate "cornerness" score using formula: score = det(m) - k * trace(m)^2
             let a = xacc * xacc;
             let b = yacc * yacc;
             let c = xacc * yacc;
             let det = (a * b) - (c * c);
             let trace = a + b;
-            let score = det - (0.4 * trace * trace);
-            
-            console.log(score);
+            let score = - (det - (0.04 * trace * trace));
+
 
             // thresholding
+            threshold = 0.2;
             if (score > threshold) {
                 result.r[x][y] = result.g[x][y] = result.b[x][y] = 255;
             } else {
-                result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = score * 255;
             }
         }
     }

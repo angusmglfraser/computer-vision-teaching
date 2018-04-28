@@ -221,8 +221,22 @@ export function initCamera(): void {
             })
         }
     ).catch(
-        function (err) {
-            alert(err);
+        function (err: Error) {
+            let errType = err.name;
+            let alertString = errType;
+            switch (errType) {
+                case "NotSupportedError":
+                alertString += "\nIf you are using Google Chrome, try changing the 'http' at the start of the url to 'https', or using a different web browser, such as Firefox";
+                break;
+                case "NotReadableError":
+                alertString += "\nPlease make sure that your webcam is connected and enabled, and not currently being used by another application.";
+                break;
+                case "NotAllowedError":
+                return;
+            }
+
+            alert(alertString);
+            
         }
     );
 }

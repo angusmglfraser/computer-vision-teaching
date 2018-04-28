@@ -21,26 +21,28 @@ function getHarrisCorners(image, threshold) {
             var yacc = 0;
             for (var i = x - 1; i <= x + 1; i++) {
                 for (var j = y - 1; j <= y + 1; j++) {
-                    xacc += x_gradients.r[i][j];
-                    yacc += y_gradients.r[i][j];
+                    xacc += Math.abs(x_gradients.r[i][j] - x_gradients.r[x][y]);
+                    yacc += Math.abs(y_gradients.r[i][j] - y_gradients.r[x][y]);
                 }
             }
             xacc /= 9;
             yacc /= 9;
+            xacc /= 255;
+            yacc /= 255;
             //calculate "cornerness" score using formula: score = det(m) - k * trace(m)^2
             var a = xacc * xacc;
             var b = yacc * yacc;
             var c = xacc * yacc;
             var det = (a * b) - (c * c);
             var trace = a + b;
-            var score = det - (0.4 * trace * trace);
-            console.log(score);
+            var score = -(det - (0.04 * trace * trace));
             // thresholding
+            threshold = 0.2;
             if (score > threshold) {
                 result.r[x][y] = result.g[x][y] = result.b[x][y] = 255;
             }
             else {
-                result.r[x][y] = result.g[x][y] = result.b[x][y] = 0;
+                result.r[x][y] = result.g[x][y] = result.b[x][y] = score * 255;
             }
         }
     }
