@@ -67,13 +67,14 @@ document.getElementById('stopBtn').addEventListener('click', function (event) {
 });
 document.getElementById('kernelSize').addEventListener('change', function (event) {
     var tmp = this;
-    var val = tmp.value;
-    if (+val != NaN) {
+    var val = +tmp.value;
+    // Check if value is a positive, odd, integer
+    if (val != NaN && val > 0 && (val | 0) === val && val % 2 == 1) {
         kernelSize = +val;
+        convolutionKernel = computeKernel(kernelSize, stdDev);
+        displayKernel = expandKernel(convolutionKernel);
+        writeMatrix(displayKernel);
     }
-    convolutionKernel = computeKernel(kernelSize, stdDev);
-    displayKernel = expandKernel(convolutionKernel);
-    writeMatrix(displayKernel);
 });
 document.getElementById('stdDev').addEventListener('change', function (event) {
     var tmp = this;

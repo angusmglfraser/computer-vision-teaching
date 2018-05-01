@@ -36,6 +36,9 @@ document.getElementById('threshold').addEventListener('change', function (event)
     threshold = +this.value;
 });
 document.getElementById('bufferSize').addEventListener('change', function (event) {
-    subtractor.setBufferSize(+this.value);
+    var val = +this.value;
+    if (val != NaN && (val | 0) === val && val > 1) {
+        subtractor.setBufferSize(val);
+    }
 });
 Vision.initCamera();

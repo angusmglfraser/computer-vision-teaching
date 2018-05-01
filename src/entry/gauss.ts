@@ -1,5 +1,5 @@
 import * as Vision from '../vision';
-declare var MathJax:any;
+declare var MathJax: any;
 
 let animating = false;
 let stdDev: number = +(document.getElementById('stdDev') as HTMLInputElement).value;
@@ -51,7 +51,7 @@ function writeMatrix(matrix: Array<Array<number>>): void {
 }
 
 function computeFrame(): void {
-    
+
     let inputImage: Vision.RGBImage = Vision.getImageFromVideo(document.getElementById('webcam') as HTMLVideoElement, document.getElementById('camfeed') as HTMLCanvasElement);
 
     let outputImage: Vision.RGBImage = Vision.convolve1d(inputImage, convolutionKernel);
@@ -75,14 +75,16 @@ document.getElementById('stopBtn').addEventListener('click', function (event) {
 document.getElementById('kernelSize').addEventListener('change', function (event) {
     let tmp = this as HTMLInputElement;
 
-    let val = tmp.value;
-    if (+val != NaN) {
+    let val = +tmp.value;
+    // Check if value is a positive, odd, integer
+    if (val != NaN && val > 0 && (val | 0) === val && val % 2 == 1) {
         kernelSize = +val;
+        convolutionKernel = computeKernel(kernelSize, stdDev);
+        displayKernel = expandKernel(convolutionKernel);
+        writeMatrix(displayKernel);
     }
 
-    convolutionKernel = computeKernel(kernelSize, stdDev);
-    displayKernel = expandKernel(convolutionKernel);
-    writeMatrix(displayKernel);
+
 });
 
 document.getElementById('stdDev').addEventListener('change', function (event) {

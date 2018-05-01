@@ -33,8 +33,11 @@ document.getElementById('stopBtn').addEventListener('click', function (event) {
 (document.getElementById('threshold') as HTMLInputElement).addEventListener('change', function (event) {
     threshold = +this.value;
 });
-(document.getElementById('bufferSize') as HTMLInputElement).addEventListener('change', function(event) {
-    subtractor.setBufferSize(+this.value);
+(document.getElementById('bufferSize') as HTMLInputElement).addEventListener('change', function (event) {
+    let val = +this.value;
+    if (val != NaN && (val | 0) === val && val > 1) {
+        subtractor.setBufferSize(val);
+    }
 });
 
 Vision.initCamera();
