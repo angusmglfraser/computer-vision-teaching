@@ -9,6 +9,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var Vision = __importStar(require("./vision"));
+/**
+ * This still doesn't work. Don't use it yet
+ * @param image
+ * @param threshold
+ */
 function getHarrisCorners(image, threshold) {
     image = image.greyScale();
     var result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
@@ -189,6 +194,7 @@ var DLinkedList = /** @class */ (function () {
     DLinkedList.prototype.removeFirstNode = function () {
         var result = this.first.data;
         this.first = this.first.next;
+        this.first.previous.next = null;
         this.first.previous = null;
         this.size--;
         return result;
@@ -196,6 +202,7 @@ var DLinkedList = /** @class */ (function () {
     DLinkedList.prototype.removeLastNode = function () {
         var result = this.last.data;
         this.last = this.last.previous;
+        this.last.next.previous = null;
         this.last.next = null;
         this.size--;
         return result;
