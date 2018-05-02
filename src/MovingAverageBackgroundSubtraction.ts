@@ -142,6 +142,7 @@ class DLinkedList<T> {
     public removeFirstNode(): T {
         let result = this.first.data;
         this.first = this.first.next;
+        this.first.previous.next = null;
         this.first.previous = null;
         this.size--;
         return result;
@@ -150,6 +151,7 @@ class DLinkedList<T> {
     public removeLastNode(): T {
         let result = this.last.data;
         this.last = this.last.previous;
+        this.last.next.previous = null;
         this.last.next = null;
         this.size--;
         return result;

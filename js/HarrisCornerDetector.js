@@ -8,6 +8,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 var Vision = __importStar(require("./vision"));
+/**
+ * This still doesn't work. Don't use it yet
+ * @param image
+ * @param threshold
+ */
 function getHarrisCorners(image, threshold) {
     image = image.greyScale();
     var result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());

@@ -1,6 +1,10 @@
 import * as Vision from './vision';
 
-
+/**
+ * This still doesn't work. Don't use it yet
+ * @param image 
+ * @param threshold 
+ */
 export function getHarrisCorners(image: Vision.RGBImage, threshold: number): Vision.RGBImage {
     image = image.greyScale();
     let result = Vision.RGBImage.fromDimensions(image.getWidth(), image.getHeight());
