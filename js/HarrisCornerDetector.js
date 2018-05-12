@@ -54,3 +54,4 @@ function getHarrisCorners(image, threshold) {
     return result;
 }
 exports.getHarrisCorners = getHarrisCorners;
+//# sourceMappingURL=HarrisCornerDetector.js.map

@@ -42,3 +42,4 @@ document.getElementById('bufferSize').addEventListener('change', function (event
     }
 });
 Vision.initCamera();
+//# sourceMappingURL=bgsub2.js.map

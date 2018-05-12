@@ -167,3 +167,4 @@ var Node = /** @class */ (function () {
     }
     return Node;
 }());
+//# sourceMappingURL=MovingAverageBackgroundSubtraction.js.map

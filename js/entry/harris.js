@@ -30,3 +30,4 @@ document.getElementById('threshold').addEventListener('change', function (event)
     threshold = +this.value;
 });
 Vision.initCamera();
+//# sourceMappingURL=harris.js.map

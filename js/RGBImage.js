@@ -132,3 +132,4 @@ var RGBImage = /** @class */ (function () {
     return RGBImage;
 }());
 exports.RGBImage = RGBImage;
+//# sourceMappingURL=RGBImage.js.map

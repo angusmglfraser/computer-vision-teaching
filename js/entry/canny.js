@@ -25,3 +25,4 @@ document.getElementById('startBtn').addEventListener('click', function (event) {
     computeFrame();
 });
 Vision.initCamera();
+//# sourceMappingURL=canny.js.map

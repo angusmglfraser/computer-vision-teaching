@@ -90,3 +90,4 @@ Vision.initCamera();
 convolutionKernel = computeKernel(kernelSize, stdDev);
 displayKernel = expandKernel(convolutionKernel);
 writeMatrix(displayKernel);
+//# sourceMappingURL=gauss.js.map
