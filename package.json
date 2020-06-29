@@ -1,0 +1,16 @@
+{
+  "name": "computer-vision-teaching",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:angusmglfraser/computer-vision-teaching.git",
+  "author": "Angus Fraser",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && webpack",
+    "watch": "webpack --watch",
+    "start": "http-server -p 8080 --cors"
+  },
+  "dependencies": {
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  }
+}
